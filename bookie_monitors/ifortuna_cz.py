@@ -1,57 +1,27 @@
+from bookie_monitors.monitor import Monitor
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
-from sqlalchemy import create_engine
-from sqlalchemy_utils import database_exists, create_database
 import time
 import random
+from config import ROOT_DIR, DEBUG
 
 
-class Monitor:
-    """
-    Class represents scraper of a single bookie web page
-    Written for ifortuna.cz
-    """
+class IfortunaCz(Monitor):
 
-    def __init__(self, web_name, game_name, logger, db_location):
-        self.logger = logger
-        self.game_name = game_name
-        self.game_identifier = "| " + game_name
-        self.web_name = web_name
-        gaming_page_mapping =\
-            {"ifortuna": "https://www.ifortuna.cz/cz/sazeni/progaming"}
-        self.gaming_page = gaming_page_mapping[web_name]
-        self.db_url = db_location
-        self.engine = self.check_db(self.db_url)
+    def __init__(self, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
         self._interesting_bet_options = ["zápas"]
         self.ted_jen_toto_no = "zápas"
-
-        file = open("data/ajax_page.html", encoding="utf-8")
-        x = file.read()
-
-        all_stats = pd.read_html(x.replace("\n", ""))
-        self.matches = self.format_table_result(all_stats[0])
-        self.matches["timestamp"] = pd.Timestamp.utcnow()
-
-        self.stats_updated = False
-
-    def clear_test_df(self):
-        self.matches = None
 
     def parse_all_stats(self, ajax_doc):
         return pd.read_html(ajax_doc.replace("\n", ""))
 
-    def update_matches(self, df):
-        df["timestamp"] = pd.Timestamp.utcnow()
-        if self.matches is None:
 
-            self.matches = df
-        else:
-            self.matches.concat(df, axis=0, inplace=True)
-
-    def get_stats_doc(self, c, ajax_url):
+    def get_stats_doc(self, ajax_url):
         for _ in range(0, 10):
-            ajax_doc = c.get(ajax_url).text
+            ajax_doc = self.get_response(ajax_url).text
             if "sázka na výsledek zápas" in ajax_doc or "betTable" in ajax_doc:
                 return ajax_doc
             else:
@@ -63,10 +33,23 @@ class Monitor:
         print("Failed to parse ajax DOC!!")
         return False
 
-    def get_actual_bookie_info(self):
-        self.clear_test_df()
-        with requests.Session() as c:
-            response = c.get(self.gaming_page)
+    def use_saved_file(self):
+        print(f"Using saved file for {self.web_name}")
+        file = open(f"{ROOT_DIR}/data/{self.web_name}.html", encoding="utf-8")
+        x = file.read()
+
+        all_stats = pd.read_html(x.replace("\n", ""))
+        matches = self.format_table_result(all_stats[0])
+        matches["timestamp"] = pd.Timestamp.utcnow()
+        return matches
+
+    # TODO: dunno. should be handeled here or in main?
+    # TODO: split into mupltiple methods
+    def get_bookie_info(self):
+        if DEBUG:
+            self.matches = self.use_saved_file()
+        else:
+            response = self.get_response(self.gaming_page)
             soup = BeautifulSoup(response.content, 'html.parser')
 
             for title in soup.find_all("h3"):
@@ -74,7 +57,7 @@ class Monitor:
                 if ajax_url is None:
                     continue
 
-                ajax_doc= self.get_stats_doc(c, ajax_url)
+                ajax_doc= self.get_stats_doc(ajax_url)
                 if ajax_doc == False:
                     print("fuck")
                 all_stats = self.parse_all_stats(ajax_doc)
@@ -86,7 +69,7 @@ class Monitor:
 
 
     def find_ajax_stats_url(self, title):
-        if self.game_identifier in title.text:
+        if "| " + self.game_name in title.text:
             relevant_div = title.find_next("div")
             assert relevant_div.get("class")[0] == "betTableFilterHolder"
             url_values = []
@@ -111,15 +94,6 @@ class Monitor:
     def parse_tournament_name(self, tournament_link):
         return tournament_link[tournament_link.rfind("/"):tournament_link.rfind("?")]
 
-    def get_biding_info(self):
-        return self.matches[["team1", "team2", "team_1_rate", "team_2_rate"]]
-
-    @staticmethod
-    def check_db(db_url):
-        engine = create_engine(db_url, echo=False)
-        if not database_exists(engine.url):
-            create_database(engine.url)
-        return engine
 
     @staticmethod
     def is_special_table(table):
@@ -142,20 +116,9 @@ class Monitor:
                   inplace=True)
         return df
 
-    def store_matches(self):
-        assert self.stats_updated is True, "No updated stats, dont put into DB"
-
-        df = self.matches.copy()
-        df["web_page"] = self.web_name
-        df["type"] = self.ted_jen_toto_no
-        df["game"] = self.game_name
-        df["my_bid_status"] = None
-        df.to_sql("bookie_stats", con=self.engine, if_exists="append", index=False)
-
 
 if __name__ == "__main__":
-    monitor = Monitor("ifortuna", "LoL")
-    monitor.get_actual_bookie_info()
-    lal = monitor.get_biding_info()
-    monitor.store_matches()
-    print("Finished")
+    import logging
+    c = IfortunaCz("chance", game_name="LoL", logger=logging, db_location="", game_url="https://www.ifortuna.cz/cz/sazeni/progaming")
+    c.get_bookie_info()
+    print()
