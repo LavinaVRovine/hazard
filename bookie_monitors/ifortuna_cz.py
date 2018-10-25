@@ -15,13 +15,13 @@ class IfortunaCz(Monitor):
         self._interesting_bet_options = ["zápas"]
         self.ted_jen_toto_no = "zápas"
 
-    def parse_all_stats(self, ajax_doc):
+    def parse_data_from_doc(self, ajax_doc):
         return pd.read_html(ajax_doc.replace("\n", ""))
 
 
     def get_stats_doc(self, ajax_url):
         for _ in range(0, 10):
-            ajax_doc = self.get_response(ajax_url).text
+            ajax_doc = super().get_response(ajax_url).text
             if "sázka na výsledek zápas" in ajax_doc or "betTable" in ajax_doc:
                 return ajax_doc
             else:
@@ -39,7 +39,7 @@ class IfortunaCz(Monitor):
         x = file.read()
 
         all_stats = pd.read_html(x.replace("\n", ""))
-        matches = self.format_table_result(all_stats[0])
+        matches = self.format_bookie_data(all_stats[0])
         matches["timestamp"] = pd.Timestamp.utcnow()
         return matches
 
@@ -49,7 +49,7 @@ class IfortunaCz(Monitor):
         if DEBUG:
             self.matches = self.use_saved_file()
         else:
-            response = self.get_response(self.gaming_page)
+            response = super().get_response(self.gaming_page)
             soup = BeautifulSoup(response.content, 'html.parser')
 
             for title in soup.find_all("h3"):
@@ -60,10 +60,10 @@ class IfortunaCz(Monitor):
                 ajax_doc= self.get_stats_doc(ajax_url)
                 if ajax_doc == False:
                     print("fuck")
-                all_stats = self.parse_all_stats(ajax_doc)
-                formatted = self.format_table_result(all_stats[0])
+                all_stats = self.parse_data_from_doc(ajax_doc)
+                formatted = self.format_bookie_data(all_stats[0])
                 # 0 index == zapasy only
-                self.update_matches(formatted)
+                super().update_matches(formatted)
                 self.stats_updated = True
                 print("succesfully updated stats")
 
@@ -99,7 +99,7 @@ class IfortunaCz(Monitor):
     def is_special_table(table):
         return "Handicap mapy" in table.columns or "Počet map" in table.columns
 
-    def format_table_result(self, pd_table):
+    def format_bookie_data(self, pd_table):
         """
         :param pd_table: df from webpage
         :return: formatted df
@@ -110,8 +110,7 @@ class IfortunaCz(Monitor):
             return {"table_name": df.columns[0], "result": df}
         df[["game_title", "game_id"]] = df.iloc[:, 0].str.rsplit(" ", 1,
                                                                  expand=True)
-        df[["team1", "team2"]] = df["game_title"].str.split(" - ", 1,
-                                                            expand=True)
+        df[["team1", "team2"]] = super().split_match_to_teams(df["game_title"])
         df.rename({"1": "team_1_rate", "2": "team_2_rate"}, axis=1,
                   inplace=True)
         return df
@@ -119,6 +118,6 @@ class IfortunaCz(Monitor):
 
 if __name__ == "__main__":
     import logging
-    c = IfortunaCz("chance", game_name="LoL", logger=logging, db_location="", game_url="https://www.ifortuna.cz/cz/sazeni/progaming")
+    c = IfortunaCz("chance", game_name="LoL", logger=logging,  game_url="https://www.ifortuna.cz/cz/sazeni/progaming")
     c.get_bookie_info()
     print()

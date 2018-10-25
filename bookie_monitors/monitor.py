@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy_utils import database_exists, create_database
-
+from config import DATABASE_URI
 
 # TODO: make it a generic class and ifortuna subclass
 # TODO: WIP - sane subclassing
@@ -13,13 +13,12 @@ class Monitor:
     Written for ifortuna.cz
     """
 
-    def __init__(self, web_name, game_name, logger, db_location, game_url):
+    def __init__(self, web_name, game_name, logger, game_url):
         self.logger = logger
         self.game_name = game_name
-        self.game_identifier = "| " + game_name
         self.web_name = web_name
         self.gaming_page = game_url
-        self.db_url = db_location
+        self.db_url = DATABASE_URI + "monitor"
         self.engine = self.check_db(self.db_url)
         self.matches = None
         self.stats_updated = False
@@ -32,9 +31,6 @@ class Monitor:
         print(f"resp code {response.status_code}")
         return response
 
-    def parse_all_stats(self, ajax_doc):
-        return pd.read_html(ajax_doc.replace("\n", ""))
-
     def update_matches(self, df):
         df["timestamp"] = pd.Timestamp.utcnow()
         if self.matches is None:
@@ -43,9 +39,16 @@ class Monitor:
         else:
             self.matches.concat(df, axis=0, inplace=True)
 
+    # TODO: find out if this even makes sense
     # to be overriden per subclass
     def get_bookie_info(self):
         return
+    # to be overriden per subclass
+    def format_bookie_data(self):
+        return
+
+    def split_match_to_teams(self, match_title_series):
+        return match_title_series.str.split(" - ", 1, expand=True)
 
     def get_biding_info(self):
         return self.matches[["team1", "team2", "team_1_rate", "team_2_rate"]]
