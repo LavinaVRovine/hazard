@@ -29,6 +29,7 @@ class Monitor:
     def get_response(self, url):
         response = self.session.get(url)
         print(f"resp code {response.status_code}")
+        assert response.status_code == 200
         return response
 
     def update_matches(self, df):

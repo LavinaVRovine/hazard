@@ -1,7 +1,7 @@
 import logging
 
 DATABASE_URI = "postgres://user:password@localhost/"
-IMPLEMENTED_BOOKIES = {"LoL": ["ifortuna"]}
+IMPLEMENTED_BOOKIES = {"LoL": {"IfortunaCz": "https://www.ifortuna.cz/cz/sazeni/progaming", "ChanceCz":"https://www.chance.cz/kurzy/e-sporty-188" }}
 DB_MAPPINGS = {"LoL": "lol"}
 GOOGLE_PW = "helloworld"
 LOG_LVL = logging.WARN

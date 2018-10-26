@@ -11,7 +11,11 @@ from config import *
 pd.set_option('display.width', 1000)
 pd.set_option('display.max_columns', 50)
 
-# TODO: refatoring, chance static file, and find out, why i dont get same chances for fnatic against cloud9 :D
+# script's purpose is to predict who ll win e-sport game and
+# suggest action and amount to bet
+# WIP currently
+
+# TODO: refatoring, chance - static file, and find out, why i dont get same chances for fnatic against cloud9 :D
 
 def decide_match_action(row, predictor, db_location):
     decision_maker = Decider(row, db_location)

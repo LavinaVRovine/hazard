@@ -13,11 +13,9 @@ class IfortunaCz(Monitor):
 
         super().__init__(*args, **kwargs)
         self._interesting_bet_options = ["zápas"]
-        self.ted_jen_toto_no = "zápas"
 
     def parse_data_from_doc(self, ajax_doc):
         return pd.read_html(ajax_doc.replace("\n", ""))
-
 
     def get_stats_doc(self, ajax_url):
         for _ in range(0, 10):
@@ -43,6 +41,9 @@ class IfortunaCz(Monitor):
         matches["timestamp"] = pd.Timestamp.utcnow()
         return matches
 
+    def get_tournament_info(self):
+        pass
+
     # TODO: dunno. should be handeled here or in main?
     # TODO: split into mupltiple methods
     def get_bookie_info(self):
@@ -57,16 +58,18 @@ class IfortunaCz(Monitor):
                 if ajax_url is None:
                     continue
 
-                ajax_doc= self.get_stats_doc(ajax_url)
-                if ajax_doc == False:
-                    print("fuck")
+                ajax_doc = self.get_stats_doc(ajax_url)
+                if ajax_doc is False:
+                    print(f"Something wen wrong with for {ajax_url}")
+                    continue
                 all_stats = self.parse_data_from_doc(ajax_doc)
-                formatted = self.format_bookie_data(all_stats[0])
-                # 0 index == zapasy only
+                # zápasy only
+                match_stats = all_stats[0]
+                formatted = self.format_bookie_data(match_stats)
                 super().update_matches(formatted)
                 self.stats_updated = True
                 print("succesfully updated stats")
-
+            return True
 
     def find_ajax_stats_url(self, title):
         if "| " + self.game_name in title.text:
@@ -93,7 +96,6 @@ class IfortunaCz(Monitor):
 
     def parse_tournament_name(self, tournament_link):
         return tournament_link[tournament_link.rfind("/"):tournament_link.rfind("?")]
-
 
     @staticmethod
     def is_special_table(table):
