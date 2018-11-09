@@ -11,9 +11,15 @@ pd.set_option('display.max_columns', 50)
 class My_predictor:
 
     def __init__(self, db_location):
+        # for DA
+        self.df_for_da = None
+
+        self.training_columns = None
         df = self.load_train_df(db_location)
         self.train_df = self.format_train_df(df)
         self.scaler = self.get_scaler()
+        self.model = None
+
 
     def load_train_df(self, db_location):
         engine = create_engine(db_location,
@@ -24,6 +30,9 @@ class My_predictor:
         formatter = Formatter(train_dataset)
         df = formatter.main_reformat()
         df = formatter.drop_for_predict(df)
+        # names NEEDED for DA
+        self.df_for_da = df.copy()
+        df.drop(["name", "c_name"], axis=1, inplace=True)
         return df
 
     def get_scaler(self):
@@ -35,25 +44,60 @@ class My_predictor:
         return standard_scaler
 
     def training(self):
-
+        print("Training started")
         df = self.train_df
 
+        # df["wards"] =  df[['wards_per_minute', 'wards_cleared_per_minute', 'pct_wards_cleared']].mean(axis=1)
+        # df["c_wards"] = df[['c_wards_per_minute', 'c_wards_cleared_per_minute',
+        #                   'c_pct_wards_cleared']].mean(axis=1)
+       # df.drop(['wards_per_minute', 'wards_cleared_per_minute', 'pct_wards_cleared', 'c_wards_per_minute', 'c_wards_cleared_per_minute',
+        #                  'c_pct_wards_cleared'], axis=1, inplace=True)
+        #df.drop(["cs_per_minute", "first_blood", "wards_per_minute", "pct_wards_cleared", "c_cs_per_minute" ,"c_first_blood", "c_wards_per_minute", "c_pct_wards_cleared",
+         #        "wards_cleared_per_minute", "c_wards_cleared_per_minute", "herald_game_value", "c_herald_game_value"], axis=1, inplace=True)
         y = df.pop("main_team_won")
         # asi musim loopvat pres kazdy
         x = df.values  # returns a numpy array
-        #standard_scaler = preprocessing.StandardScaler()
+        standard_scaler = preprocessing.StandardScaler()
+        #for col in df.columns:
+       #     df[col] =standard_scaler.fit_transform(df[col].values.reshape(-1, 1))
+
         #x_scaled = standard_scaler.fit_transform(x)
         #x_scaled = self.scaler.transform(x)
         #df_scaler = pd.DataFrame(x_scaled)
-
+        #df = x_scaled
         X_train, X_test, y_train, y_test = train_test_split(df, y,
                                                             test_size=0.2)
 
+        from sklearn.model_selection import cross_val_score
+        from sklearn.linear_model import LogisticRegression
+        from sklearn.naive_bayes import GaussianNB
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.ensemble import VotingClassifier
+
+
+        clf1 = LogisticRegression(random_state=1)
+        clf2 = RandomForestClassifier(n_estimators=50, random_state=1)
+        clf3 = GaussianNB()
+        eclf = VotingClassifier(
+            estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+            voting='soft')
+
+        for clf, label in zip([clf1, clf2, clf3, eclf],
+                                   ['Logistic Regression', 'Random Forest',
+                                    'naive Bayes', 'Ensemble']):
+            scores = cross_val_score(clf, df, y, cv=5, scoring='accuracy')
+
+            print("Accuracy: %0.2f (+/- %0.2f) [%s]" % (
+            scores.mean(), scores.std(), label))
+        self.training_columns = df.columns
+        print(f"Set training columns {self.training_columns}")
         model = LogisticRegression()
+
         model.fit(X_train, y_train)
 
         score = model.score(X_test, y_test)
-        print(f"yay its working with {score}")
+        print(f"model {model} scored {score}. Model set")
+        self.model = model
         #self.save_model(model)
 
 
@@ -73,10 +117,15 @@ class My_predictor:
 
 
     def predict_one_match(self, row):
-        clf = self.load_saved_model()
+        #clf = self.load_saved_model()
+        clf = self.model
         labels = clf.classes_
-        training_cols =  list(self.train_df.columns)
-        training_cols.remove("main_team_won")
+        assert self.training_columns is not None, "Need to train first - testing"
+        training_cols =  list(self.training_columns)
+        try:
+            training_cols.remove("main_team_won")
+        except:
+            pass
         row = row[training_cols]
 
         probabilities = clf.predict_proba(row)
@@ -164,11 +213,28 @@ def try_mxnet():
 # used for training new models
 if __name__ == "__main__":
     #try_mxnet()
+    from config import DATABASE_URI
+
+    db_url = f"{DATABASE_URI}lol"
 
 
-    pred = My_predictor()
+    exit()
 
-    df = pred.load_train_df()
+    pred = My_predictor(db_url)
+
+    df = pred.load_train_df(db_url)
+    pred.training()
+
+    df_with_names = pred.df_for_da
+    sample = df_with_names.sample()
+
+    team_name = sample["name"]
+    competitor_name = sample["c_name"]
+    sample.drop(["c_name", "name"], axis=1, inplace=True)
+    predictions = pred.predict_one_match(sample)
+
+
+    print()
     formatter = Formatter(df)
     df = formatter.main_reformat()
     #y = df.pop("main_team_won")

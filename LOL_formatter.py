@@ -82,7 +82,7 @@ class Formatter:
                  "nashors_game",
                  "c_dragon_game", "c_herald_game", "c_nashors_game",
                  "c_win_to_lose"], axis=1, inplace=True)
-        df.drop(["name", "c_name"], axis=1, inplace=True)
+        #df.drop(["name", "c_name"], axis=1, inplace=True)
         return df
 
     def drop_for_main(self, df):

@@ -1,7 +1,7 @@
 from tabulate import tabulate
 from config import GMAIL_USER_MAIL, GOOGLE_PW
 
-def send_mail(message, game):
+def send_mail(message, game, bookie):
     import smtplib
     from email.mime.multipart import MIMEMultipart
     from email.mime.text import MIMEText
@@ -11,7 +11,7 @@ def send_mail(message, game):
     server_ssl.login(GMAIL_USER_MAIL, GOOGLE_PW)
 
     msg = MIMEMultipart('alternative')
-    msg['subject'] = f"Update on hazard for game: {game}"
+    msg['subject'] = f"Update on hazard for game: {game} - {bookie}"
     msg['To'] = GMAIL_USER_MAIL
     msg['From'] = GMAIL_USER_MAIL
     msg.preamble = """

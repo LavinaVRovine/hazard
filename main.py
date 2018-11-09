@@ -72,7 +72,7 @@ def main(game):
         if DEBUG:
             print(reformat_output_mail(data), game)
         else:
-            send_mail(reformat_output_mail(data), game)
+            send_mail(reformat_output_mail(data), game, bookie)
 
 
 if __name__ == "__main__":
