@@ -1,5 +1,9 @@
 from tabulate import tabulate
 from config import GMAIL_USER_MAIL, GOOGLE_PW
+import re
+
+def parse_number(string:str)->int:
+    return int(re.compile("/(\d+)/").findall(string)[0])
 
 def send_mail(message, game, bookie):
     import smtplib

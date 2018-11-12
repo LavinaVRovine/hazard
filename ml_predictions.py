@@ -131,13 +131,13 @@ class My_predictor:
         probabilities = clf.predict_proba(row)
         return self.format_one_prediction(labels, probabilities)
 
-def try_mxnet():
+def try_mxnet(db_loc):
     from mxnet import nd, autograd, gluon
     import mxnet as mx
     from mxnet.gluon import nn
 
-    pred = My_predictor()
-    df = pred.format_train_df(pred.load_train_df())
+    pred = My_predictor(db_loc)
+    df = pred.format_train_df(pred.load_train_df(db_loc))
     y = df.pop("main_team_won")
     X = df.copy()
     category_count = 2
@@ -171,12 +171,21 @@ def try_mxnet():
         batch_size=batch_size, shuffle=True)
     test = mx.gluon.data.DataLoader(mx.gluon.data.ArrayDataset(X_test, y_test),
                                     batch_size=batch_size, shuffle=False)
-    net = gluon.nn.Sequential()
+
+    net = mx.gluon.nn.Sequential()
     with net.name_scope():
-       net.add(gluon.nn.Dense(128, activation="relu"))
-       net.add(gluon.nn.Dense(64, activation="relu"))
-       net.add( nn.Dense(category_count))
-   # net = nn.Dense(category_count)
+        net.add(gluon.nn.Embedding(30, 10))
+        net.add(gluon.rnn.LSTM(20))
+        net.add(gluon.nn.Dense(category_count, flatten=False))
+   #  net.initialize()
+   #
+   #
+   #
+   #  with net.name_scope():
+   #     net.add(gluon.nn.Dense(128, activation="relu"))
+   #     net.add(gluon.nn.Dense(64, activation="relu"))
+   #     net.add( nn.Dense(category_count))
+   # # net = nn.Dense(category_count)
     net.initialize(mx.init.Normal())
     softmax = gluon.loss.SoftmaxCrossEntropyLoss()
     trainer = gluon.Trainer(net.collect_params(), "sgd",
@@ -217,7 +226,7 @@ if __name__ == "__main__":
 
     db_url = f"{DATABASE_URI}lol"
 
-
+    try_mxnet(db_url)
     exit()
 
     pred = My_predictor(db_url)

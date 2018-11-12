@@ -5,6 +5,7 @@ from sqlalchemy import create_engine
 import numpy as np
 import random
 import psycopg2
+import traceback
 from scrape.dota.dota_match_scraper import DotaMatch
 from scrape.dota.dota_helpers import update_team_and_match_db_return_t_id, pandify_basic_match_info
 from scrape.scrape_helpers import Sess
@@ -37,24 +38,31 @@ def scrape_pending_matches():
     c =Sess()
 
     for i, (index, row) in enumerate(pending_matches.iterrows()):
+        print(i)
         link = row["match_link"]
-        # skip already parsed matches
+        row_id = row["row_id"]
+        # skip already parsed matches might have been in multiple times
         if link in list(pd.read_sql_table("matches", con=engine)[
                             "match_link"].unique()):
+            cursor.execute(
+                f"UPDATE dota_matches SET scraped_page = {True} WHERE row_id = {row_id}")
+            conn.commit()
+
             continue
 
-        row_id = row["row_id"]
+
         print(BASE_URL + link)
         resp = c.get(BASE_URL + link)
         if resp is False:
-
+            print("Failed scraped")
             cursor.execute(
-                f"UPDATE dota_matches SET scraped_page = {None} WHERE row_id = {row_id}")
+                f"UPDATE dota_matches SET scraped_page = NULL WHERE row_id = {row_id}")
             conn.commit()
             continue
         #assert resp.status_code == 200, f"Failed {link} with code {resp.status_code}"
         match = DotaMatch(bs.BeautifulSoup(resp.text, "html5lib"))
         if not match:
+            print("failed match instantialization")
             continue
         match_overview = pandify_basic_match_info(match.basic_match_info)
         try:
@@ -93,8 +101,14 @@ def scrape_pending_matches():
             cursor.execute(
                 f"UPDATE dota_matches SET scraped_page = {True} WHERE row_id = {row_id}")
             conn.commit()
-        except:
-            pass
+            print("successfull update")
+        except Exception:
+            cursor.execute(
+                f"UPDATE dota_matches SET scraped_page = NULL WHERE row_id = {row_id}")
+            conn.commit()
+
+            print("failed update")
+
 
 if __name__ == "__main__":
     scrape_pending_matches()

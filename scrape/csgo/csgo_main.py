@@ -1,62 +1,156 @@
 import requests
 import pandas as pd
 import bs4 as bs
-import asyncio
 import traceback
-import csv
-import re
+from sqlalchemy import create_engine
+import psycopg2
+from helpers.helpers import parse_number
 from scrape.scrape_helpers import Sess
 from scrape.csgo.csgo_match import CSGOMatch
+from config import DATABASE_URI
+
 pd.set_option('display.width', 1000)
 pd.set_option('display.max_columns', 50)
 
 BASE_URL = "https://www.hltv.org"
+DB_URL = f"{DATABASE_URI}csgo"
+ENGINE = create_engine(DB_URL)
 
-# gets urls of all matches
-def get_csgo_matches():
+
+def get_current_scrape_pages():
+    return pd.read_sql_table("scrape_urls", con=ENGINE)
+
+
+class Found(Exception):
+    pass
+
+
+def update_csgo_matches():
+    """
+    Loops until it finds url, which is already scraped.
+    Results on page are sorted by date.
+    Appends new result urls for scraping into Database.
+    :return: True
+    """
+    current_links = set(get_current_scrape_pages()["link"].unique())
     offset = 0
     urls = set()
-    with requests.session() as c:
 
-        while offset < 40544 :
-            url = f"https://www.hltv.org/results?offset={offset}"
+    with requests.session() as session:
+        print("Started looking for new CSGO results")
+        while True:
             try:
-                response = c.get(url)
-                soup = bs.BeautifulSoup(response.text,"html5lib")
+                results_url = f"{BASE_URL}/results?offset={offset}"
+                results_soup =\
+                    bs.BeautifulSoup(session.get(results_url).text, "html5lib")
 
-                for match in soup.find_all("div",{"class":"result-con"}):
+                for match in results_soup.find_all("div",
+                                                   {"class": "result-con"}):
                     match_url = match.find("a").get("href")
+                    if match_url in current_links:
+                        raise Found("found")
                     urls.add(match_url)
-                offset += 100
 
+                offset += 100
                 if offset % 1000 == 0:
                     print(f"successfully run {offset}")
-            except:
-                pd.Series(list(urls)).to_csv("csgo_matches.csv", index=False)
-                print(traceback.print_exc())
-                print(f"Failed at offset {offset}")
-                exit()
-        else:
-            pd.Series(list(urls)).to_csv("csgo_matches.csv", index=False)
-            print("Done")
-# TODO: POZOR UZ NENI V CSV ALE V DB!
-#get_csgo_matches()
-
-from dataclasses import dataclass
-
-@dataclass
-class Team:
-    name: str
-
-d = Team("a")
+            except Found:
+                pd.DataFrame(list(urls), columns=["link"]).to_sql(
+                    "scrape_urls", con=ENGINE, index=False, if_exists='append')
+                print(f"Updated urls for CS:GO scraping by {len(urls)}.")
+                return True
+    return False
 
 
 if __name__ == "__main__":
-    c = Sess()
-    url = "https://www.hltv.org/matches/2328545/optic-vs-complexity-cs-summit-3"
-    #url = "https://www.hltv.org/stats/matches/61686/optic-vs-complexity"
-    response = c.get(url)
-    soup = bs.BeautifulSoup(response.text, "html5lib")
-    cs_match = CSGOMatch(soup, c)
-    print()
+    update_csgo_matches()
 
+    conn = psycopg2.connect(DB_URL)
+    cursor = conn.cursor()
+    scrape_urls = get_current_scrape_pages()
+    pending_urls = scrape_urls[(scrape_urls["scraped"] != False) &
+                               (scrape_urls["scraped"] != True)]
+    c = Sess()
+
+    for index, row in pending_urls.iterrows():
+        link = row["link"]
+        url = BASE_URL + link
+        site_match_id = int(parse_number(url))
+        print(f"Processing: {url}")
+        soup = bs.BeautifulSoup(c.get(url).text, "html5lib")
+
+        try:
+            cs_match = CSGOMatch(soup, c)
+        except Exception:
+            print("failed init -> no stats")
+            cursor.execute(
+               f"UPDATE scrape_urls SET scraped = FALSE WHERE link='{link}'")
+            conn.commit()
+            continue
+
+        games = cs_match.get_games_info()
+        if len(games) == 0:
+            print("found no games on the page, skipping for now")
+            continue
+
+        match_info = pd.Series(cs_match.parse_base_info())
+        match_info["match_id"] = site_match_id
+        # this is gay
+        match_info = pd.DataFrame(match_info).T
+        games_df = pd.DataFrame(
+            columns=["map_name", "game_id", "match_id", "nth_match"]
+        )
+        game_teams_df = pd.DataFrame(
+            columns=["game_id", "team_id", "name", "winner", "score"]
+        )
+        players_stats_df = None
+
+        for game_index, game in enumerate(games):
+            game_n_in_match = game_index + 1
+            games_df = games_df.append({
+                "map_name": game.map_name, "game_id": game.site_game_id,
+                "match_id": site_match_id, "nth_match": game_n_in_match},
+                ignore_index=True
+            )
+
+            for t in[game.t1, game.t2]:
+                team_repr = t.__dict__
+
+                player_stats = team_repr.pop("player_stats")
+                team_id = team_repr["team_id"]
+
+                team_repr["game_id"] = game.site_game_id
+                team_repr["team_id"] = team_id
+                team_repr["nth_game"] = game_n_in_match
+                team_repr["game_team_id"] =\
+                    f"{game.site_game_id}:{team_id}:{game_n_in_match}"
+                game_teams_df =\
+                    game_teams_df.append(team_repr, ignore_index=True)
+
+                player_stats["game_id"] = game.site_game_id
+                player_stats["team_id"] = team_id
+                player_stats["nth_game"] = game_n_in_match
+                player_stats["game_team_id"] = \
+                    f"{game.site_game_id}:{team_id}:{game_n_in_match}"
+
+                if players_stats_df is None:
+                    players_stats_df = player_stats
+                else:
+                    players_stats_df = players_stats_df.append(player_stats)
+
+        try:
+            players_stats_df.to_sql("players_stats", con=ENGINE, index=False,
+                                    if_exists="append")
+            match_info.to_sql("matches", con=ENGINE, index=False,
+                              if_exists="append")
+            games_df.to_sql("games", con=ENGINE, index=False,
+                            if_exists="append")
+            game_teams_df.to_sql("games_teams", con=ENGINE, index=False,
+                                 if_exists="append")
+
+            cursor.execute(
+                f"UPDATE scrape_urls SET scraped = TRUE WHERE link='{link}'")
+            conn.commit()
+        except Exception:
+            traceback.print_exc()
+            exit()
