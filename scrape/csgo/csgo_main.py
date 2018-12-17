@@ -15,7 +15,7 @@ pd.set_option('display.max_columns', 50)
 BASE_URL = "https://www.hltv.org"
 DB_URL = f"{DATABASE_URI}csgo"
 ENGINE = create_engine(DB_URL)
-
+# TODO map name je s nejakym shit znakem
 
 def get_current_scrape_pages():
     return pd.read_sql_table("scrape_urls", con=ENGINE)
@@ -78,7 +78,8 @@ if __name__ == "__main__":
         site_match_id = int(parse_number(url))
         print(f"Processing: {url}")
         soup = bs.BeautifulSoup(c.get(url).text, "html5lib")
-
+        if url == "https://www.hltv.org/matches/2297915/night-raid-vs-kappakappa-dreamhack-open-cluj-napoca-2015-eu-pre-qualifier-2":
+            continue
         try:
             cs_match = CSGOMatch(soup, c)
         except Exception:

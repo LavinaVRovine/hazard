@@ -1,0 +1,33 @@
+-- game_stats_reduced_to_matches
+--vypocitam kolik % series tym vyhral a vezmu si minimalni match link
+with series_percent as (
+    SELECT series_link,
+           team_id as redundant_team_id,
+           min(matches.match_link) as min_series_match,
+
+           ROUND(
+             100.0 * (
+                 SUM(CASE
+                       WHEN "left"("Result", 1) = 'W' THEN 1
+                       ELSE 0 END) :: DECIMAL / COUNT(matches.match_link)
+                 ), 1) AS win_pct,
+           ROUND(
+              (
+                 SUM(CASE
+                       WHEN "left"("Result", 1) = 'W' THEN 1
+                       ELSE 0 END) :: DECIMAL / COUNT(matches.match_link)
+                 ), 0) AS match_won
+    FROM matches
+           JOIN dota_matches
+             ON matches.match_link = dota_matches.match_link and
+                (matches.t1_id = dota_matches.team_id or
+                 matches.t2_id = dota_matches.team_id)
+    --WHERE dota_matches.match_link = '/matches/32232139'
+    GROUP BY series_link, team_id
+)
+-- najoinuji minimalni matchlink a team id na moje statistiky
+-- jelikoz mam jen minimalni id matche, tak se mi zaznamy z vsech matchu
+-- redukuji na jedinou game, ktera reprezenuje cely match
+SELECT*
+FROM game_stats_with_winrate
+JOIN series_percent ON game_stats_with_winrate.match_link = min_series_match AND game_stats_with_winrate.team_id = series_percent.redundant_team_id

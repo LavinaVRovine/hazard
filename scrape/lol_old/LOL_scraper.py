@@ -5,13 +5,17 @@ import re
 import time
 import random
 import logging
-
 from sqlalchemy.orm import sessionmaker
 
 logging.basicConfig(filename='fails.log', filemode='w', format='%(asctime)s %(name)s - %(levelname)s - %(message)s')
 
+
+# auto update LOL je asi nereálný, nechce se přepisovat
+
 BASE_URL = "http://gol.gg/"
 tournaments_url = "/tournament/list/region-ALL/"
+
+
 class Team_parser():
 
     def __init__(self, team_link, req_session, sql_session):
@@ -222,16 +226,10 @@ class S_scraper():
         sql_session.commit()
 
 
-        print()
+
 
         time.sleep(random.randint(1,3))
-        print(f'Done team {stats["Team Name"]}')
 
-
-
-
-        print(f"parsed page")
-        print()
 
 
     # ed_user = Team(name='ed')
@@ -256,14 +254,11 @@ def session_scope():
     finally:
         session.close()
 
-
-
-
 def run_my_program():
-    sql_Session = sessionmaker(bind=engine)
+    sql_session = sessionmaker(bind=engine)
 
     """Provide a transactional scope around a series of operations."""
-    session = sql_Session()
+    session = sql_session()
 
     url = "http://gol.gg/teams/list/season-S5/split-ALL/region-ALL/tournament-ALL/week-ALL/"
     with requests.Session() as c:
@@ -294,19 +289,8 @@ def run_my_program():
                 session.rollback()
                 logging.error(f"failed for {a}")
                 print(f"failed {a}")
-                #raise
+                # raise
             finally:
                 session.close()
 
-#run_my_program()
-
-
-
-
-
-
-
-
-
-
-
+# run_my_program()

@@ -1,0 +1,50 @@
+-- sum of values for one game and a team, ie number of kills, deaths etc.
+with match_sums as (SELECT stats.match_id, stats.team_id, teams.team_name,
+       sum("Kills") kills, sum("Deaths") deaths, sum("Assists") assists,
+       sum("Net Worth") worth, sum("Last Hits") last_hits,
+       sum("Denies") denies, sum("Gold earned per minute") gold_min,
+       sum("Experience earned per minute") xp_min,
+       sum("Damage dealt to enemy Heroes") dmg_heroes,
+       sum("Healing provided to friendly Heroes") healing,
+       sum("Damage dealt to enemy buildings") dmg_buildings
+from matches
+JOIN stats ON stats.match_id = matches.match_id
+JOIN teams ON stats.team_id = teams.team_id
+GROUP BY stats.match_id, stats.team_id, teams.team_name),
+     --calculates winrate per year per team
+team_year_stats as (
+with teamid_win as (
+select team_id,
+case
+        when team_id = t1_id then t1_winner
+        when team_id = t2_id then t2_winner
+    else
+        null
+    END as i_win,
+       "left"("Match Ended_value",4) as year
+from teams
+join matches ON teams.team_id = matches.t1_id or teams.team_id = matches.t2_id
+    )
+
+select team_id as winrate_team_id,year as winrate_year,ROUND(
+              100.0 * (
+                 SUM(CASE
+                       WHEN teamid_win.i_win = true THEN 1
+                       ELSE 0 END) :: DECIMAL / COUNT(teamid_win.i_win)
+                 ), 0) AS winrate,
+       count(team_id) as match_count
+from teamid_win
+group by winrate_team_id, winrate_year)
+
+-- averages team year -> creates stats for a team in a year
+SELECT avg(kills) kills, avg(deaths) deaths, avg(assists) assists,
+       avg(worth) worth, avg(last_hits) last_hits, avg(denies) denies,
+       avg(gold_min) gold_min, avg(xp_min) xp_min, avg(dmg_heroes) dmg_heroes,
+       avg(healing) healing, avg(dmg_buildings) dmg_buildings,
+      max(winrate) winrate, max(match_count) as matchount,
+       "left"("Match Ended_value",4) as year_of_game,
+       team_name, team_id
+from match_sums
+JOIN matches ON match_sums.match_id = matches.match_id
+JOIN team_year_stats ON team_id = winrate_team_id AND "left"("Match Ended_value",4)  = winrate_year
+GROUP BY year_of_game, team_id, team_name

@@ -1,10 +1,11 @@
-from bookie_monitors.monitor import Monitor
 import requests
+import re
 from bs4 import BeautifulSoup
 import pandas as pd
 import time
 import random
 from config import ROOT_DIR, DEBUG
+from bookie_monitors.monitor import Monitor
 
 
 class IfortunaCz(Monitor):
@@ -33,7 +34,7 @@ class IfortunaCz(Monitor):
 
     def use_saved_file(self):
         print(f"Using saved file for {self.web_name}")
-        file = open(f"{ROOT_DIR}/data/{self.web_name}.html", encoding="utf-8")
+        file = open(f"{ROOT_DIR}/data/IfortunaCz.html", encoding="utf-8")
         x = file.read()
 
         all_stats = pd.read_html(x.replace("\n", ""))
@@ -72,9 +73,11 @@ class IfortunaCz(Monitor):
             return True
 
     def find_ajax_stats_url(self, title):
+
         if "| " + self.game_name in title.text:
             relevant_div = title.find_next("div")
-            assert relevant_div.get("class")[0] == "betTableFilterHolder"
+            link = None
+            #assert relevant_div.get("class")[0] == "betTableFilterHolder"
             url_values = []
             for span in relevant_div.find_all("span", {"class": "checkbox"}):
                 bet_type_title = span.find("input").get("title")
@@ -85,6 +88,16 @@ class IfortunaCz(Monitor):
                     parent = span.parent
                     assert parent.name == "span"
                     link = parent.find("a").get("href")
+            # nevim zda se že to předělali? važně nevim
+            if link is None:
+                th = relevant_div.find("th")
+                link = th.find("a").get("href")
+
+                rrr = re.compile("itemTypeId=(\d+)")
+                neco_id = rrr.findall(link)
+                if neco_id == []:
+                    return
+                url_values = [neco_id[0]]
 
             ajax_url = self.gaming_page + self.parse_tournament_name(
                 link) + "?action=filter_by_subgame&itemTypeId=" + ";".join(
@@ -120,6 +133,9 @@ class IfortunaCz(Monitor):
 
 if __name__ == "__main__":
     import logging
-    c = IfortunaCz("chance", game_name="LoL", logger=logging,  game_url="https://www.ifortuna.cz/cz/sazeni/progaming")
+    #c = IfortunaCz("chance", game_name="LoL", logger=logging,  game_url="https://www.ifortuna.cz/cz/sazeni/progaming")
+    DEBUG = False
+    c = IfortunaCz("ifortuna", game_name="Dota", logger=logging,
+                   game_url="https://www.ifortuna.cz/cz/sazeni/progaming")
     c.get_bookie_info()
     print()

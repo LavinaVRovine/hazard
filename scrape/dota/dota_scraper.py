@@ -11,6 +11,11 @@ pd.set_option('display.width', 1000)
 pd.set_option('display.max_columns', 50)
 
 
+# scrapovalo se tak, ze se vzaly zapasy, z nich teamy,
+# hitnul se team a oscrapovaly se vsechny jeho zapasy.
+# to proto, ze team obsahuje vsechny zapasy. seznam zapasu jako takovych neni
+
+
 # zatim funguje tak, ze mam vsechny teamy, pro ty loopuji a meru vsechny jejich matche
 # pokud je oponent nekdo, koho nemam v db jako team, tak je pridan -> je nutno potom neyet jeste nekolikrat...
 
@@ -125,7 +130,8 @@ class TeamScraper:
 
 
 if __name__ == "__main__":
-
+    import bs4 as bs
+    # old scrape
     def get_matches():
         all_teams = pd.read_sql_table("teams", engine)
         all_matches = pd.read_sql_table("dota_matches", engine)
@@ -139,6 +145,54 @@ if __name__ == "__main__":
             # asi jsem skipnul Team Empire -->set false
             ts = TeamScraper(row, all_teams)
             ts.go()
+
+
+    def parse_matches_webpage(web_page, soup):
+        visible_data = pd.read_html(web_page)[0]
+
+        parsed_table = soup.find_all('table')[0]
+        # copypasted from SO...
+        data = [[td.a['href'] if td.find('a') else
+                 ''.join(td.stripped_strings)
+                 for td in row.find_all('td')]
+                for row in parsed_table.find_all('tr')]
+        link_data = pd.DataFrame(data[1:])
+        link_data.drop([3, 4], axis=1, inplace=True)
+        link_data.rename(
+            {0: "tournament_link", 1: "match_link", 2: "series_link",
+             5: "oponent_link"}, axis=1, inplace=True)
+        return pd.concat([visible_data, link_data], axis=1)
+
+    # vezme pouze nove esport matche
+    def update_matches():
+        page_num = 1
+        from scrape.scrape_helpers import Sess
+
+        while True:
+
+            time.sleep(random.randint(2, 7))
+            url = f"https://www.dotabuff.com/esports/matches?page={page_num}"
+            print(url)
+            resp = Sess().get(url)
+
+            soup = bs.BeautifulSoup(resp.text, 'html5lib')
+            df = parse_matches_webpage(resp.text, soup)
+            df.drop(df.columns[4], axis=1, inplace=True)
+            df = df[['tournament_link', 'match_link', 'series_link', 'oponent_link',  'Duration', 'Series']]
+            df.to_sql("dota_matches", engine, if_exists="append",
+                      index=False)
+
+            page_num += 1
+            if page_num >= 50:
+                break
+
+
+
+
+
+    update_matches()
+
+
 
 
 

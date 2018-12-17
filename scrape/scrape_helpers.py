@@ -2,6 +2,10 @@ import requests
 import random
 
 
+class AccessDenied(Exception):
+    pass
+
+
 class Sess:
     def __init__(self):
         self.ses = requests.session()
@@ -27,6 +31,8 @@ class Sess:
             self.use_proxy()
             return self.get(url)
         self.reset_counter()
+        if response.status_code != 200:
+            raise AccessDenied
         return response
 
     def reset_agent(self):

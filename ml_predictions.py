@@ -117,8 +117,8 @@ class My_predictor:
 
 
     def predict_one_match(self, row):
-        #clf = self.load_saved_model()
-        clf = self.model
+        clf = self.load_saved_model()
+        #clf = self.model
         labels = clf.classes_
         assert self.training_columns is not None, "Need to train first - testing"
         training_cols =  list(self.training_columns)
@@ -226,8 +226,8 @@ if __name__ == "__main__":
 
     db_url = f"{DATABASE_URI}lol"
 
-    try_mxnet(db_url)
-    exit()
+    #try_mxnet(db_url)
+    #exit()
 
     pred = My_predictor(db_url)
 

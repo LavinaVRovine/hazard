@@ -38,7 +38,8 @@ class Monitor:
 
             self.matches = df
         else:
-            self.matches.concat(df, axis=0, inplace=True)
+            self.matches = pd.concat([self.matches,df], axis=0)
+
 
     # TODO: find out if this even makes sense
     # to be overriden per subclass

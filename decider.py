@@ -25,8 +25,9 @@ class Decider:
     def create_match_stats_row(self):
         main_team = self.lookup_team_stats(self.team_1_name)
         competitor = self.lookup_team_stats(self.team_2_name)
-        assert main_team is not None, f"No team {self.team_1_name} in DB"
-        assert competitor is not None, f"No team {self.team_2_name} in DB"
+        if len(main_team) == 0 or len(competitor) == 0:
+            print( f"No team {self.team_1_name} in DB or No team {self.team_2_name} in DB")
+            raise ValueError
         competitor = competitor.add_prefix('c_')
         whole_row = pd.concat([main_team, competitor], axis=1)
         return whole_row
@@ -50,3 +51,15 @@ class Decider:
         else:
             return f"seems like a pass: bookie pct = {bookie_pct} and mine {my_pct_win_change}"
 
+class DotaDecider(Decider):
+    def lookup_team_stats(self, team_name):
+        return pd.read_sql(f"SELECT * FROM team_year_stats WHERE team_name = '{team_name}' ORDER BY year_of_game DESC LIMIT 1", con=self.engine)
+    def create_match_stats_row(self):
+        print()
+        main_team = self.lookup_team_stats(self.team_1_name)
+        competitor = self.lookup_team_stats(self.team_2_name)
+        assert main_team is not None, f"No team {self.team_1_name} in DB"
+        assert competitor is not None, f"No team {self.team_2_name} in DB"
+        competitor = competitor.add_prefix('c_')
+        whole_row = pd.concat([main_team, competitor], axis=1)
+        return whole_row
