@@ -14,6 +14,10 @@ ENGINE = create_engine(DB_URL)
 print("reading csho stats, which takes a while")
 df = pd.read_sql_table("brutal_match_stats", con=ENGINE).drop_duplicates()
 
+# super quick fix for imbalanced dataset; drop
+drop_frac = (len(df.t1_winner[df.t1_winner == True]) - len(df.t1_winner[df.t1_winner == False]))/len(df.t1_winner[df.t1_winner == True])
+df = df.drop(df.query('t1_winner == True').sample(frac=drop_frac).index)
+
 y = df.pop("t1_winner")
 df.fillna(0, inplace=True)
 scaler = StandardScaler()
@@ -22,8 +26,21 @@ df.drop(["t1_id", "t2_id", "year", "match_id"], axis=1, inplace=True)
 df.drop(["kast", "c_kast", "kd_diff", "c_kd_diff", "fk_diff", "c_fk_diff"], axis=1, inplace=True)
 #df = scaler.fit_transform(df)
 
-X_train, X_test, y_train, y_test = train_test_split(df,y)
 
+# X_train, X_test, y_train, y_test = train_test_split(df,y)
+#
+# model = LogisticRegression()
+# model.fit(X_train,y_train)
+# print(model.score(X_test, y_test))
+#
+# model = LogisticRegression(C=0.5)
+# model.fit(X_train,y_train)
+# print(model.score(X_test, y_test))
+# model = LogisticRegression(C=1.5)
+# model.fit(X_train,y_train)
+# print(model.score(X_test, y_test))
+#
+# exit()
 
 from mxnet import nd, autograd, gluon
 import mxnet as mx
@@ -33,10 +50,9 @@ from mxnet.gluon import nn
 X = df.copy()
 # zda se, ze tohle nefunguje, jelikoz jsou to pandas objekty,
 # pxnet pracuje jen s numpy
-X_train, X_test, y_train, y_test = train_test_split(df, y,
-                                                    test_size=0.2)
 
-sample_count = len(X)  # 6036
+
+sample_count = len(X)
 train_count = round(sample_count * 0.8)
 valid_count = sample_count - train_count
 feature_count = len(list(X.columns))
@@ -72,18 +88,16 @@ net = mx.gluon.nn.Sequential()
 #
 #
 with net.name_scope():
-    net.add(gluon.nn.Dense(128, activation="relu"))
-    net.add(gluon.nn.Dense(64, activation="relu"))
+    net.add(gluon.nn.Dense(256, activation="tanh"))
+    net.add(gluon.nn.Dense(256, activation="relu"))
     net.add( nn.Dense(category_count))
 # # net = nn.Dense(category_count)
-net.initialize(mx.init.Normal())
+net.collect_params().initialize(mx.init.Normal())
 softmax = gluon.loss.SoftmaxCrossEntropyLoss()
-trainer = gluon.Trainer(net.collect_params(), "sgd",
-                        {"learning_rate": 0.001})
+trainer = gluon.Trainer(net.collect_params(), "sgd", {"learning_rate": 0.1})
 
 epochs = 1000
-train_acc = mx.metric.Accuracy()
-test_acc = mx.metric.Accuracy()
+
 
 def evaluate_accuracy(data_iterator, net):
     acc = mx.metric.Accuracy()
@@ -92,7 +106,6 @@ def evaluate_accuracy(data_iterator, net):
         output = net(data)
         predictions = nd.argmax(output, axis=1)
         acc.update(preds=predictions, labels=label)
-    print(acc)
     return acc.get()[1]
 
 for epoch in range(epochs):
@@ -101,12 +114,13 @@ for epoch in range(epochs):
         with autograd.record():
             output = net(data)
             loss = softmax(output, label)
-
         loss.backward()
-        trainer.step(batch_size)
+        trainer.step(data.shape[0])
         total_loss += nd.sum(loss).asscalar()
     train_acc = evaluate_accuracy(train, net)
     test_acc = evaluate_accuracy(test, net)
     print(
-        f"so in epoch {epoch} we have loss: {total_loss/60000} with train_acc {train_acc} and test acc {test_acc} ")
+        f"so in epoch {epoch} we have loss: {total_loss/60000} with train_acc {train_acc} and test acc {test_acc}")
+
+
 
