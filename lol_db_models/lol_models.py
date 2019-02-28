@@ -73,6 +73,7 @@ class Team_match(Base):
     team_id = Column(Integer, ForeignKey("teams.team_id"))
     match_title = Column(String)
     match_url = Column(String)
+    scraped = Column(Boolean)
     teams = relationship("Team")
 
 class Game_result(Base):

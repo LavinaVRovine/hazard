@@ -1,5 +1,5 @@
 import pytest
-from decider import Decider
+from decisions.decider import Decider
 
 #TODO: hmmm, asi nutny refaktoring
 

@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from models.lol_models import Team, engine, Player_team, Team_match
+from lol_db_models.lol_models import Team, engine, Player_team, Team_match
 import re
 import time
 import random
@@ -254,13 +254,13 @@ def session_scope():
     finally:
         session.close()
 
-def run_my_program():
+def scrape_season(season="S8"):
     sql_session = sessionmaker(bind=engine)
 
     """Provide a transactional scope around a series of operations."""
     session = sql_session()
 
-    url = "http://gol.gg/teams/list/season-S5/split-ALL/region-ALL/tournament-ALL/week-ALL/"
+    url = f"http://gol.gg/teams/list/season-{season}/split-ALL/region-ALL/tournament-ALL/week-ALL/"
     with requests.Session() as c:
         response = c.get(url)
         soup = BeautifulSoup(response.content, 'html.parser')
@@ -293,4 +293,4 @@ def run_my_program():
             finally:
                 session.close()
 
-# run_my_program()
+scrape_season("S9")

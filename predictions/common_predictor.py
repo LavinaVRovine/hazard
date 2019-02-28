@@ -11,7 +11,10 @@ class CommonPredictor:
     def __init__(self):
         self.scaler = None
         self.name = type(self).__name__
-        self.model = self.load_saved_model()
+        try:
+            self.model = self.load_saved_model()
+        except:
+            pass
         self.new_model = None
         self.X_train, self.X_test, self.y_train, self.y_test = \
             (None, None, None, None)
@@ -31,6 +34,11 @@ class CommonPredictor:
             f"and score {self.new_model.score(self.X_test, self.y_test):.2f}%"
         )
 
+    def eval_predict_proba(self):
+        predicted = self.new_model.predict_proba(self.X_test)
+        tr = predicted[:, 0]
+        return f"avg distance from random {abs(tr - 0.5).mean()}"
+
     def check_differences(self, clf):
 
         labels = clf.classes_
@@ -40,7 +48,7 @@ class CommonPredictor:
         probs = pd.DataFrame(probabilities, columns=labels)
         t = pd.concat([probs, real.reset_index(drop=True)], axis=1)
         t["predicted"] = np.where(t[False] > 0.5, False, True)
-        wrong = t[t["t1_winner"] != t["predicted"]]
+        wrong = t[t[self.y_col_name] != t["predicted"]]
         extremely_wrong = wrong[(wrong[False] > 0.8) | (wrong[False] < 0.2)]
         return f"got {len(extremely_wrong)} extremely wrong from {len(real)}" \
                f" which is {len(extremely_wrong)/len(real):.3f}%"

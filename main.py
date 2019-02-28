@@ -1,14 +1,14 @@
 import pandas as pd
-import traceback
-from bookie_monitors.ifortuna_cz import IfortunaCz
-from bookie_monitors.chance_cz import ChanceCz
-from decider import Decider, DotaDecider
-from LOL_formatter import Formatter
+import click
+from decisions.csgo_decider import CSGODecider
+from decisions.dota_decider import DotaDecider
+from decisions.lol_decider import LoLDecider
 from helpers.helpers import *
-from config import *
+from config import logging, DATABASE_URI, DB_MAPPINGS, IMPLEMENTED_BOOKIES, DEBUG
 from predictions.lol_predictor import LoLPredictor
 from predictions.dota_predictor import DotaPredictor
-
+from predictions.csgo_predictor import CSGOPredictor
+from bookie_monitors.ifortuna_cz import IfortunaCz # needed, dont remove
 pd.set_option('display.width', 1000)
 pd.set_option('display.max_columns', 50)
 
@@ -17,49 +17,19 @@ pd.set_option('display.max_columns', 50)
 # WIP currently
 
 # TODO: refatoring, chance - static file, and find out, why i dont get same chances for fnatic against cloud9 :D
-
-def decide_match_action(row, predictor, db_location):
-    decision_maker = Decider(row, db_location)
-    try:
-        match_row = decision_maker.create_match_stats_row()
-    except ValueError:
-        return {"team1": row['team1'], "team2": row['team2']}
-    formatter = Formatter(match_row)
-    try:
-        formatted_row = formatter.main_reformat()
-        bookie_match_row =\
-            formatter.drop_useless_columns(formatted_row, type="main")
-
-        preds = predictor.predict_one_match(bookie_match_row)
-        # now does basically nothing :)
-        decision = decision_maker.compare_ods(preds[True])
-
-        output =\
-            {"team1": row['team1'], "team2": row['team2'],
-             "preds":preds, "decision": decision}
-
-        print(
-            f"prediction for {row['team1']} againt competitor {row['team2']}"
-            f" are {preds}   {decision}")
-        return output
-    except:
-        print(
-            f"something went wrong for  {row['team1']} againt"
-            f" competitor {row['team2']}")
-        traceback.print_exc()
-        return {"team1": row['team1'], "team2": row['team2']}
-
-
 def main(game):
     logging.info(f"Started script for game: {game}")
+    print(f"Started script for game: {game}")
     db_location = DATABASE_URI + DB_MAPPINGS[game]
     if game == "LoL":
         predictor = LoLPredictor()
     elif game == "Dota":
         predictor = DotaPredictor()
+    elif game == "CS:GO":
+        predictor = CSGOPredictor()
     else:
         logging.critical(f"Not implemented game: {game}")
-        raise NotImplemented
+        raise NotImplementedError
     global_vars = globals()
     bookies = IMPLEMENTED_BOOKIES[game]
     for bookie, game_url in bookies.items():
@@ -80,41 +50,46 @@ def main(game):
         # for each match basically decide what to do
         for index, row in basic_info.iterrows():
             if game == "LoL":
-                data.append(decide_match_action(row, predictor, db_location))
-            elif game == "Dota":
-
+                decision_maker = LoLDecider(row, db_location)
+            elif game == "Dota" :
                 decision_maker = DotaDecider(row, db_location)
-
-                try:
-                    match_row = decision_maker.create_match_stats_row()
-                    match_row = match_row[predictor.training_columns]
-                    preds = predictor.predict_one_match(match_row)
-                    decision = decision_maker.compare_ods(preds[True])
-
-                    output = \
-                        {"team1": row['team1'], "team2": row['team2'],
-                         "preds": preds, "decision": decision}
-
-                    print(
-                        f"prediction for {row['team1']} againt competitor {row['team2']}"
-                        f" are {preds}   {decision}")
-                    data.append(output)
-                except:
-                    print(
-                        f"something went wrong for  {row['team1']} againt"
-                        f" competitor {row['team2']}")
-                    traceback.print_exc()
-                    data.append( {"team1": row['team1'], "team2": row['team2']})
-                print()
-
+            elif game == "CS:GO":
+                decision_maker = CSGODecider(row, db_location)
+            else:
+                raise NotImplementedError
+            data.append(decision_maker.decide_match_action(row, predictor))
         if DEBUG:
             print(reformat_output_mail(data), game)
         else:
             send_mail(reformat_output_mail(data), game, bookie)
 
 
-if __name__ == "__main__":
-    print("rolling lol")
-    main("LoL")
-    print("rolling dota")
-    main("Dota")
+@click.command()
+
+@click.option('--compare_odds','-co', default=['all'],
+              help='Which game(s) to compare',
+              type=click.Choice(["all", "lol", "dota", "csgo"]),
+              multiple=True, show_default=True)
+def compare_odds(**kwargs):
+
+    if 'game_name' in kwargs:
+        games = kwargs['game_name']
+    else:
+        games = ["all"]
+
+    # if "csgo" in games:
+    #     raise Exception ("csgo currently turned off, because it sucks")
+    if "all" in games:
+        main("LoL")
+        main("Dota")
+        main("CS:GO")
+    else:
+        for game in games:
+
+            for key, value in DB_MAPPINGS.items():
+                if value == game:
+                    main(key)
+
+
+if __name__ == '__main__':
+    compare_odds()

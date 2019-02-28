@@ -1,7 +1,7 @@
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
-from models.lol_models import  engine,  Game_result
+from lol_db_models.lol_models import  engine,  Game_result, Team_match
 import time
 import json
 import logging
@@ -72,6 +72,10 @@ class Games_parser():
                     competitor_team_id=(int(winner_row.iloc[0, 1])), score=json.dumps(results),
                     main_team_won=False))
 
+
+        sql_session.query(Team_match).filter(Team_match.match_url == url).update({"scraped": True})
+
+
         return
 
 
@@ -79,14 +83,16 @@ class Games_parser():
 
  #   Games_parser(s).parse_page("/game/stats/2476/page-summary/")
 
-def run_my_program():
+
+# TODO: je naprd, jelikoz bere proste vsechno, ne jen nenascrapovane!
+
+def scrape_pending_games():
     sql_Session = sessionmaker(bind=engine)
 
     """Provide a transactional scope around a series of operations."""
     session = sql_Session()
 
-    df = pd.read_sql("SELECT team_matches.match_id, team_matches.team_id, team_matches.match_url, teams.name"
-                     " FROM team_matches JOIN teams ON teams.team_id = team_matches.team_id", engine)
+    df = pd.read_sql("SELECT team_matches.match_id, team_matches.team_id, team_matches.match_url, teams.name FROM team_matches JOIN teams ON teams.team_id = team_matches.team_id WHERE team_matches.scraped isnull", engine)
 
     unique_urls = df["match_url"].unique()
 
@@ -94,11 +100,13 @@ def run_my_program():
         time.sleep(0.5)
         with requests.Session() as s:
             Games_parser(s).parse_page(url, df, session)
-
-
         try:
 
             session.commit()
+
+
+
+
             print(f"url {url}")
 
         except:
@@ -108,6 +116,4 @@ def run_my_program():
         finally:
             session.close()
 
-
-
-#run_my_program()
+scrape_pending_games()

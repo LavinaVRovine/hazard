@@ -21,9 +21,16 @@ Sadly, only LoL shows real predictive capabilities.
 
 **TODO**
 
+Run main.py --help for possible actions.
+
+main.py --compare_odds _name_of_game_ :
+Checks if any games are being offered at 
+implemented bookies and if so, compares predicted odds against bookie odds,
+and then sends email with recommended action.
+
 ## Development setup
 
-Just install dependencies from requirements.txt. Code is written in python 3.7.
+Just install dependencies from environment.yaml .
 
 ## Release History
 

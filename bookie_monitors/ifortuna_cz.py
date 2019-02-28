@@ -73,8 +73,8 @@ class IfortunaCz(Monitor):
             return True
 
     def find_ajax_stats_url(self, title):
-
-        if "| " + self.game_name in title.text:
+        # ga
+        if "| " + self.game_name in title.text and "celkov" not in title.text:
             relevant_div = title.find_next("div")
             link = None
             #assert relevant_div.get("class")[0] == "betTableFilterHolder"

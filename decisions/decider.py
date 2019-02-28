@@ -2,7 +2,7 @@ import pandas as pd
 from sqlalchemy import create_engine
 pd.set_option('display.width', 1000)
 pd.set_option('display.max_columns', 50)
-
+import traceback
 
 class Decider:
     """
@@ -29,11 +29,15 @@ class Decider:
             print( f"No team {self.team_1_name} in DB or No team {self.team_2_name} in DB")
             raise ValueError
         competitor = competitor.add_prefix('c_')
-        whole_row = pd.concat([main_team, competitor], axis=1)
+        if type(competitor) == pd.Series or type(main_team) == pd.Series:
+            whole_row = pd.concat([main_team, competitor])
+            return pd.DataFrame(whole_row).T
+        else:
+            whole_row = pd.concat([main_team, competitor],axis=1)
         return whole_row
 
     def lookup_team_stats(self, team_name):
-        return pd.read_sql(f"SELECT * FROM teams WHERE name = '{team_name}' ORDER BY season DESC LIMIT 1", con=self.engine)
+        pass
 
     @staticmethod
     def is_big_difference(pct_diff):
@@ -44,22 +48,37 @@ class Decider:
         return bookie_pct - my_pct
 
     def compare_ods(self, my_pct_win_change):
-        bookie_pct = self.calc_ods_percent(self.team_1_rate)
+        bookie_pct = self.calc_ods_percent(float(self.team_1_rate))
         diff = self.pct_diff(bookie_pct, my_pct_win_change)
         if self.is_big_difference(diff):
             return f"should do stuff: bookie pct = {bookie_pct} and mine {my_pct_win_change}"
         else:
             return f"seems like a pass: bookie pct = {bookie_pct} and mine {my_pct_win_change}"
 
-class DotaDecider(Decider):
-    def lookup_team_stats(self, team_name):
-        return pd.read_sql(f"SELECT * FROM team_year_stats WHERE team_name = '{team_name}' ORDER BY year_of_game DESC LIMIT 1", con=self.engine)
-    def create_match_stats_row(self):
-        print()
-        main_team = self.lookup_team_stats(self.team_1_name)
-        competitor = self.lookup_team_stats(self.team_2_name)
-        assert main_team is not None, f"No team {self.team_1_name} in DB"
-        assert competitor is not None, f"No team {self.team_2_name} in DB"
-        competitor = competitor.add_prefix('c_')
-        whole_row = pd.concat([main_team, competitor], axis=1)
-        return whole_row
+    def decide_match_action(self, row, predictor):
+        try:
+            match_row = self.create_match_stats_row()
+        except ValueError:
+            return {"team1": row['team1'], "team2": row['team2']}
+
+        try:
+            match_row = match_row[predictor.training_columns]
+
+            preds = predictor.predict_one_match(match_row.fillna(0))
+            # now does basically nothing :)
+            decision = self.compare_ods(preds[True])
+
+            output = \
+                {"team1": row['team1'], "team2": row['team2'],
+                 "preds": preds, "decision": decision}
+
+            print(
+                f"prediction for {row['team1']} againt competitor {row['team2']}"
+                f" are {preds}   {decision}")
+            return output
+        except:
+            print(
+                f"something went wrong for  {row['team1']} againt"
+                f" competitor {row['team2']}")
+            traceback.print_exc()
+            return {"team1": row['team1'], "team2": row['team2']}

@@ -102,6 +102,9 @@ class My_predictor:
 
 
     def load_saved_model(self):
+
+        return joblib.load('C:\\Users\\pavel\\Desktop\\filename.joblib')
+
         return joblib.load('data/filename.joblib')
 
 
@@ -219,7 +222,7 @@ def try_mxnet(db_loc):
         print(
             f"so in epoch {epoch} we have loss: {total_loss/60000} with train_acc {train_acc} and test acc {test_acc} ")
 
-# used for training new models
+# used for training new lol_db_models
 if __name__ == "__main__":
     #try_mxnet()
     from config import DATABASE_URI
