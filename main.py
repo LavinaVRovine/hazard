@@ -8,7 +8,7 @@ from config import logging, DATABASE_URI, DB_MAPPINGS, IMPLEMENTED_BOOKIES, DEBU
 from predictions.lol_predictor import LoLPredictor
 from predictions.dota_predictor import DotaPredictor
 from predictions.csgo_predictor import CSGOPredictor
-from bookie_monitors.ifortuna_cz import IfortunaCz # needed, dont remove
+from bookie_monitors.ifortuna_cz import IfortunaCz  # needed, dont remove
 pd.set_option('display.width', 1000)
 pd.set_option('display.max_columns', 50)
 
@@ -16,57 +16,78 @@ pd.set_option('display.max_columns', 50)
 # suggest action and amount to bet
 # WIP currently
 
-# TODO: refatoring, chance - static file, and find out, why i dont get same chances for fnatic against cloud9 :D
+
+def create_predictor(game):
+    if game == "LoL":
+        return LoLPredictor()
+    elif game == "Dota":
+        return DotaPredictor()
+    elif game == "CS:GO":
+        return CSGOPredictor()
+    else:
+        logging.critical(f"Not implemented game: {game}")
+        raise NotImplementedError
+
+
+def create_decider(game, row, db_location):
+    if game == "LoL":
+        return LoLDecider(row, db_location)
+    elif game == "Dota":
+        return DotaDecider(row, db_location)
+    elif game == "CS:GO":
+        return CSGODecider(row, db_location)
+    else:
+        raise NotImplementedError
+
+
+def get_bookie_stats(bookie, game, game_url):
+    global_vars = globals()
+    assert bookie in global_vars, f"Cant instantialize " \
+        f"class for bookie {bookie}"
+    monitor = global_vars[bookie](bookie,
+                                  game_name=game,
+                                  logger=logging,
+                                  game_url=game_url
+                                  )
+    # goes to bookie page and downloads new stats etc.
+    monitor.get_bookie_info()
+    if monitor.matches is None:
+        print(f"No games are being played for {game} on {bookie}")
+        return
+    # if monitor.stats_updated:
+    #     monitor.store_matches()
+    return monitor.get_biding_info()
+
+
 def main(game):
     logging.info(f"Started script for game: {game}")
     print(f"Started script for game: {game}")
     db_location = DATABASE_URI + DB_MAPPINGS[game]
-    if game == "LoL":
-        predictor = LoLPredictor()
-    elif game == "Dota":
-        predictor = DotaPredictor()
-    elif game == "CS:GO":
-        predictor = CSGOPredictor()
-    else:
-        logging.critical(f"Not implemented game: {game}")
-        raise NotImplementedError
-    global_vars = globals()
+    predictor = create_predictor(game)
     bookies = IMPLEMENTED_BOOKIES[game]
     for bookie, game_url in bookies.items():
-
-        assert bookie in global_vars, f"Cant instantialize class for bookie {bookie}"
-        # inits bookie class
-        monitor = global_vars[bookie](bookie, game_name=game, logger=logging,
-                                 game_url=game_url)
-        # goes to bookie page and downloads new stats etc.
-        monitor.get_bookie_info()
-        if monitor.matches is None:
-            print(f"No games are being played for {game} on {bookie}")
+        bookie_stats = get_bookie_stats(bookie, game, game_url)
+        if bookie_stats is None:
             continue
-        # if monitor.stats_updated:
-        #     monitor.store_matches()
-        basic_info = monitor.get_biding_info()
-        data = list()
+        output_data = list()
         # for each match basically decide what to do
-        for index, row in basic_info.iterrows():
-            if game == "LoL":
-                decision_maker = LoLDecider(row, db_location)
-            elif game == "Dota" :
-                decision_maker = DotaDecider(row, db_location)
-            elif game == "CS:GO":
-                decision_maker = CSGODecider(row, db_location)
-            else:
-                raise NotImplementedError
-            data.append(decision_maker.decide_match_action(row, predictor))
+        for index, row in bookie_stats.iterrows():
+            decision_maker = create_decider(game, row, db_location)
+            output_data.append(
+                dict(
+                    decision_maker.decide_match_action(predictor),
+                    **{"date": row["datum"]}
+                )
+            )
+
         if DEBUG:
-            print(reformat_output_mail(data), game)
+            print(reformat_output_mail(output_data), game)
         else:
-            send_mail(reformat_output_mail(data), game, bookie)
+            send_mail(reformat_output_mail(output_data), game, bookie)
 
 
 @click.command()
-
-@click.option('--compare_odds','-co', default=['all'],
+@click.option('--compare_odds', '-co', default=['all'],
               help='Which game(s) to compare',
               type=click.Choice(["all", "lol", "dota", "csgo"]),
               multiple=True, show_default=True)
@@ -77,8 +98,6 @@ def compare_odds(**kwargs):
     else:
         games = ["all"]
 
-    # if "csgo" in games:
-    #     raise Exception ("csgo currently turned off, because it sucks")
     if "all" in games:
         main("LoL")
         main("Dota")

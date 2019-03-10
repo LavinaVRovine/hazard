@@ -1,6 +1,6 @@
 import pandas as pd
 import bs4 as bs
-from dataclasses import dataclass
+# from dataclasses import dataclass
 from helpers.helpers import parse_number
 
 pd.set_option('display.width', 1000)
@@ -129,16 +129,23 @@ class CSGOGame:
 
 
 # wanted to try dataclasses:0
-@dataclass()
+#@dataclass()
 class Team:
     """
     Represents team participating in a game
     """
-    name: str
-    winner: bool
-    score: int
-    team_id: int
-    player_stats: pd.DataFrame = None
+
+    def __init__(self, name ,winner, score, team_id, player_stats=None):
+        self.name = name
+        self.winner = winner
+        self.score = score
+        self.team_id = team_id
+        self.player_stats = player_stats
+    # name: str
+    # winner: bool
+    # score: int
+    # team_id: int
+    # player_stats: pd.DataFrame = None
 
     def set_player_stats(self, df: pd.DataFrame):
         """

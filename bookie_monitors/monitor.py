@@ -1,9 +1,9 @@
 import requests
-from bs4 import BeautifulSoup
 import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy_utils import database_exists, create_database
 from config import DATABASE_URI
+
 
 # TODO: make it a generic class and ifortuna subclass
 # TODO: WIP - sane subclassing
@@ -27,8 +27,12 @@ class Monitor:
         self.session = requests.Session()
 
     def get_response(self, url):
-        response = self.session.get(url)
-        print(f"resp code {response.status_code}")
+
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:65.0) Gecko/20100101 Firefox/65.0',
+        }
+
+        response = self.session.get(url, headers=headers)
         assert response.status_code == 200
         return response
 
@@ -38,22 +42,25 @@ class Monitor:
 
             self.matches = df
         else:
-            self.matches = pd.concat([self.matches,df], axis=0)
-
+            self.matches = pd.concat([self.matches, df], axis=0)
 
     # TODO: find out if this even makes sense
     # to be overriden per subclass
     def get_bookie_info(self):
         return
+
     # to be overriden per subclass
     def format_bookie_data(self):
         return
 
-    def split_match_to_teams(self, match_title_series):
+    @staticmethod
+    def split_match_to_teams(match_title_series):
         return match_title_series.str.split(" - ", 1, expand=True)
 
     def get_biding_info(self):
-        return self.matches[["team1", "team2", "team_1_rate", "team_2_rate"]]
+        return self.matches[
+            ["team1", "team2", "team_1_rate", "team_2_rate", "datum"]
+        ]
 
     @staticmethod
     def check_db(db_url):

@@ -1,25 +1,25 @@
-import requests
 import re
 from bs4 import BeautifulSoup
 import pandas as pd
 import time
 import random
-from config import ROOT_DIR, DEBUG
+from config import ROOT_DIR
 from bookie_monitors.monitor import Monitor
 
 
 class IfortunaCz(Monitor):
 
     def __init__(self, *args, **kwargs):
-
         super().__init__(*args, **kwargs)
         self._interesting_bet_options = ["zápas"]
 
-    def parse_data_from_doc(self, ajax_doc):
+    @staticmethod
+    def parse_data_from_doc(ajax_doc):
         return pd.read_html(ajax_doc.replace("\n", ""))
 
     def get_stats_doc(self, ajax_url):
-        for _ in range(0, 10):
+        # sometimes get fails
+        for _ in range(0, 5):
             ajax_doc = super().get_response(ajax_url).text
             if "sázka na výsledek zápas" in ajax_doc or "betTable" in ajax_doc:
                 return ajax_doc
@@ -29,7 +29,6 @@ class IfortunaCz(Monitor):
                 print(
                     f"Waiting {wait_time} because ajax "
                     f"doc seems corrupted: {ajax_doc}")
-        print("Failed to parse ajax DOC!!")
         return False
 
     def use_saved_file(self):
@@ -42,73 +41,96 @@ class IfortunaCz(Monitor):
         matches["timestamp"] = pd.Timestamp.utcnow()
         return matches
 
-    def get_tournament_info(self):
-        pass
+    def get_parse_page(self):
+        response = super().get_response(self.gaming_page)
+        return BeautifulSoup(response.content, 'html.parser')
 
-    # TODO: dunno. should be handeled here or in main?
-    # TODO: split into mupltiple methods
+    @staticmethod
+    def is_invalid_tournament(t_title):
+        return \
+            "ukončení podpory starých" in t_title.text or \
+            "Živá hra online" in t_title.text
+
+    def process_tournament_table(self, table):
+        tournament_title = table.find("h3")
+        if self.is_invalid_tournament(tournament_title):
+            return
+
+        ajax_url = self.find_ajax_stats_url(table, tournament_title)
+        if ajax_url is None:
+            return
+        ajax_doc = self.get_stats_doc(ajax_url)
+        if ajax_doc is False:
+            print(f"Something wen wrong with for {ajax_url}")
+            return
+
+        # zápasy only
+        match_stats = self.parse_data_from_doc(ajax_doc)[0]
+        formatted = self.format_bookie_data(match_stats)
+        return formatted
+
     def get_bookie_info(self):
-        if DEBUG:
-            self.matches = self.use_saved_file()
-        else:
-            response = super().get_response(self.gaming_page)
-            soup = BeautifulSoup(response.content, 'html.parser')
+        soup = self.get_parse_page()
+        for table in soup.find_all("div", {"class": "gradient_table"}):
+            formatted = self.process_tournament_table(table=table)
+            if formatted is None:
+                continue
+            super().update_matches(formatted)
+            self.stats_updated = True
+            print("succesfully updated stats")
+        return True
 
-            for title in soup.find_all("h3"):
-                ajax_url = self.find_ajax_stats_url(title)
-                if ajax_url is None:
-                    continue
+    def is_game_tournament(self, title):
+        """Kinda stupidly made...if searching for dota, consider only dota"""
+        return " | " + self.game_name in title.text
 
-                ajax_doc = self.get_stats_doc(ajax_url)
-                if ajax_doc is False:
-                    print(f"Something wen wrong with for {ajax_url}")
-                    continue
-                all_stats = self.parse_data_from_doc(ajax_doc)
-                # zápasy only
-                match_stats = all_stats[0]
-                formatted = self.format_bookie_data(match_stats)
-                super().update_matches(formatted)
-                self.stats_updated = True
-                print("succesfully updated stats")
-            return True
 
-    def find_ajax_stats_url(self, title):
-        # ga
-        if "| " + self.game_name in title.text and "celkov" not in title.text:
-            relevant_div = title.find_next("div")
-            link = None
-            #assert relevant_div.get("class")[0] == "betTableFilterHolder"
-            url_values = []
-            for span in relevant_div.find_all("span", {"class": "checkbox"}):
-                bet_type_title = span.find("input").get("title")
-                # not interested in pocet map and so on
-                if self.is_relevant_bid_type(bet_type_title):
-                    value = span.find("input").get("value")
-                    url_values.append(value)
-                    parent = span.parent
-                    assert parent.name == "span"
-                    link = parent.find("a").get("href")
-            # nevim zda se že to předělali? važně nevim
-            if link is None:
-                th = relevant_div.find("th")
-                link = th.find("a").get("href")
+    def search_for_filter_link(self, table_div):
+        # magic IDs of tournaments
+        url_filters = []
+        tournament_link = None
+        for span in table_div.find_all("span", {"class": "checkbox"}):
+            bet_type_title = span.find("input").get("title")
+            # not interested in pocet map and so on
+            if self.is_relevant_bid_type(bet_type_title):
+                value = span.find("input").get("value")
+                url_filters.append(value)
+                parent = span.parent
+                assert parent.name == "span"
+                tournament_link = parent.find("a").get("href")
+        # nevim zda se že to předělali? važně nevim
+        if tournament_link is None:
+            th = table_div.find("th")
+            tournament_link = th.find("a").get("href")
 
-                rrr = re.compile("itemTypeId=(\d+)")
-                neco_id = rrr.findall(link)
-                if neco_id == []:
-                    return
-                url_values = [neco_id[0]]
+            rrr = re.compile("itemTypeId=(\d+)")
+            neco_id = rrr.findall(tournament_link)
+            if neco_id == []:
+                return tournament_link, []
+            url_filters = [neco_id[0]]
 
-            ajax_url = self.gaming_page + self.parse_tournament_name(
-                link) + "?action=filter_by_subgame&itemTypeId=" + ";".join(
-                url_values) + ";&_ajax=1"
-            return ajax_url
+        return tournament_link, url_filters
+
+    def find_ajax_stats_url(self, table_div, title):
+        if not self.is_game_tournament(title):
+            return
+        # elif "celkov" not in title.text:
+        #   return
+
+        link, url_values = self.search_for_filter_link(table_div)
+        ajax_url = self.gaming_page + self.parse_tournament_name(
+            link) + "?action=filter_by_subgame&itemTypeId=" + ";".join(
+            url_values) + ";&_ajax=1"
+        return ajax_url
 
     def is_relevant_bid_type(self, bet_type_title):
         return bet_type_title in self._interesting_bet_options
 
-    def parse_tournament_name(self, tournament_link):
-        return tournament_link[tournament_link.rfind("/"):tournament_link.rfind("?")]
+    @staticmethod
+    def parse_tournament_name(tournament_link):
+        return tournament_link[
+               tournament_link.rfind("/"):tournament_link.rfind("?")
+               ]
 
     @staticmethod
     def is_special_table(table):
@@ -133,9 +155,7 @@ class IfortunaCz(Monitor):
 
 if __name__ == "__main__":
     import logging
-    #c = IfortunaCz("chance", game_name="LoL", logger=logging,  game_url="https://www.ifortuna.cz/cz/sazeni/progaming")
-    DEBUG = False
-    c = IfortunaCz("ifortuna", game_name="Dota", logger=logging,
+    c = IfortunaCz("ifortuna", game_name="CS:GO", logger=logging,
                    game_url="https://www.ifortuna.cz/cz/sazeni/progaming")
     c.get_bookie_info()
     print()
