@@ -1,0 +1,23 @@
+with comp_stats as (
+     SELECT kills c_kills, deaths c_deaths, assists c_assists, worth c_worth,
+       last_hits c_last_hits, denies c_denies, gold_min c_gold_min,
+       xp_min c_xp_min, dmg_heroes c_dmg_heroes, healing c_healing,
+       dmg_buildings c_dmg_buildings, year_of_game c_year_of_game,
+       team_id c_team_id, winrate c_winrate
+FROM team_year_stats_with_winrate
+    ),
+ main_stats as (
+     SELECT kills kills, deaths deaths, assists assists, worth worth,
+       last_hits last_hits, denies denies, gold_min gold_min,
+       xp_min xp_min, dmg_heroes dmg_heroes, healing healing,
+       dmg_buildings dmg_buildings, year_of_game year_of_game,
+       team_id team_id, winrate winrate
+FROM team_year_stats_with_winrate
+    )
+
+
+
+SELECT *, "left"("Match Ended_value", 4 ) as game_year
+FROM main_stats
+JOIN matches ON matches.t1_id = main_stats.team_id AND "left"("Match Ended_value", 4 ) = main_stats.year_of_game
+JOIN comp_stats ON comp_stats.c_team_id = matches.t1_id AND c_year_of_game = "left"("Match Ended_value", 4 )

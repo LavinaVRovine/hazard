@@ -116,7 +116,8 @@ class IfortunaCz(Monitor):
             return
         # elif "celkov" not in title.text:
         #   return
-
+        if "celkový vítěz" in title.text:
+            return
         link, url_values = self.search_for_filter_link(table_div)
         ajax_url = self.gaming_page + self.parse_tournament_name(
             link) + "?action=filter_by_subgame&itemTypeId=" + ";".join(

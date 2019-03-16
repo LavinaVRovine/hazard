@@ -1,0 +1,22 @@
+# run: conda env create --file environment.yml
+name: hazard
+dependencies:
+- beautifulsoup4==4.6.3
+- html5lib==1.0.1
+- lxml==4.2.5
+- numpy==1.14.6
+- pandas==0.23.4
+- psycopg2==2.7.5
+- pytest==3.9.1
+- requests==2.18.4
+- scikit-learn==0.20.0
+- scipy==1.1.0
+- SQLAlchemy==1.2.12
+- tabulate==0.8.2
+- click==7.0
+- sqlalchemy-utils
+
+
+# then pip install
+#oddscalculator==0.3
+#graphviz==0.8.4

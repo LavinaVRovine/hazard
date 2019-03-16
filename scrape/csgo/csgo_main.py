@@ -24,6 +24,9 @@ def get_current_scrape_pages():
 class Found(Exception):
     pass
 
+class Blocked(Exception):
+    """Uve been blocked!"""
+    pass
 
 def update_csgo_matches():
     """
@@ -35,14 +38,19 @@ def update_csgo_matches():
     current_links = set(get_current_scrape_pages()["link"].unique())
     offset = 0
     urls = set()
-
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:65.0) Gecko/20100101 Firefox/65.0',
+    }
     with requests.session() as session:
         print("Started looking for new CSGO results")
         while True:
             try:
                 results_url = f"{BASE_URL}/results?offset={offset}"
                 results_soup =\
-                    bs.BeautifulSoup(session.get(results_url).text, "html5lib")
+                    bs.BeautifulSoup(session.get(results_url, headers=headers).text, "html5lib")
+
+                if results_soup.find("h1", {"data-translate": "block_headline"}) is not None:
+                    raise Blocked
 
                 for match in results_soup.find_all("div",
                                                    {"class": "result-con"}):
@@ -78,7 +86,7 @@ if __name__ == "__main__":
         site_match_id = int(parse_number(url))
         print(f"Processing: {url}")
         soup = bs.BeautifulSoup(c.get(url).text, "html5lib")
-        if url == "https://www.hltv.org/matches/2297915/night-raid-vs-kappakappa-dreamhack-open-cluj-napoca-2015-eu-pre-qualifier-2":
+        if url == "https://www.hltv.org/matches/2297915/night-raid-vs-kappakappa-dreamhack-open-cluj-napoca-2015-eu-pre-qualifier-2" or url == "https://www.hltv.org/matches/2330407/ut-austin-vs-kennesaw-state-university-java-collegiate-2":
             continue
         try:
             cs_match = CSGOMatch(soup, c)
@@ -154,4 +162,4 @@ if __name__ == "__main__":
             conn.commit()
         except Exception:
             traceback.print_exc()
-            exit()
+            #exit()

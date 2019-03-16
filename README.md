@@ -15,13 +15,16 @@ predictor against bookie odds and suggest appropriate action. Does not bet itsel
 ![](header.png)
 
 ## Reality check
-Sadly, only LoL shows real predictive capabilities.
+Currently LoL and CS:GO seems to be working reasonably well.
 
 ## Usage example
 
-**TODO**
-
 Run main.py --help for possible actions.
+
+OR
+
+run X_main.py in scrape folder of the game to download the statistics (
+which might take a while...), then run main
 
 main.py --compare_odds _name_of_game_ :
 Checks if any games are being offered at 
