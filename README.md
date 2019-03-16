@@ -17,6 +17,15 @@ predictor against bookie odds and suggest appropriate action. Does not bet itsel
 ## Reality check
 Currently LoL and CS:GO seems to be working reasonably well.
 
+Accuracy score (.score, one of the metrics used) for games:
+<ul>
+<li>LoL ~73% (RandomForrest)</li>
+<li>Dota ~68% (RandomForrest)</li>
+<li>CS:GO ~70% (GradientBoosting)</li>
+</ul>
+
+Dota does not deliver in real scenario.
+
 ## Usage example
 
 Run main.py --help for possible actions.
