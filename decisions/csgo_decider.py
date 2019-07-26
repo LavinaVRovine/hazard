@@ -17,6 +17,7 @@ class CSGODecider(Decider):
         team_name = team_name.replace("Clan", "")
         team_name = team_name.replace("Gaming", "")
         team_name = team_name.replace("Esports", "")
+        team_name = team_name.replace("eSports", "")
 
         return team_name.strip().lower()
 
@@ -24,9 +25,12 @@ class CSGODecider(Decider):
 
         team_name = self.clear_name(team_name)
 
-        if team_name == "ex-Fragsters":
-            team_name = "Fragsters"
-
+        if team_name == "ex-Fragsters" or team_name == "ex-fragsters":
+            team_name = "fragsters"
+        elif team_name == 'Ninjas in Pyjamas' or team_name == 'ninjas in pyjamas':
+            team_name = "nip"
+        elif team_name == 'LDLC.com' or team_name == 'ldlc.com':
+            team_name = "ldlc"
         team = self.teams[self.teams["name"] == team_name]
         if len(team) == 0:
             return

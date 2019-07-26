@@ -18,7 +18,7 @@ def send_mail(message, game, bookie):
 
     msg = MIMEMultipart('alternative')
     msg['subject'] = f"Update on hazard for game: {game} - {bookie}"
-    msg['To'] = GMAIL_USER_MAIL + ", jan.kudelka91@gmail.com"
+    msg['To'] = GMAIL_USER_MAIL #+ ", jan.kudelka91@gmail.com"
     msg['From'] = GMAIL_USER_MAIL
     msg.preamble = """
     Your mail reader does not support the report format.

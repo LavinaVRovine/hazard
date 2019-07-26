@@ -111,4 +111,6 @@ def compare_odds(**kwargs):
 
 
 if __name__ == '__main__':
-    compare_odds()
+    main("Dota")
+    #exit()
+    #compare_odds()

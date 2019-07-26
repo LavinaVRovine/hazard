@@ -3,88 +3,142 @@ from sqlalchemy import create_engine
 from config import DATABASE_URI
 from predictions.common_predictor import CommonPredictor
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestClassifier
+from predictions.lol_create_dataset import create_lol_dataset
 pd.set_option('display.width', 1000)
 pd.set_option('display.max_columns', 50)
+from sklearn.feature_selection import SelectKBest
+from sklearn.metrics import accuracy_score, roc_auc_score, classification_report, confusion_matrix, f1_score, median_absolute_error, mean_squared_error
+from sklearn.model_selection import RandomizedSearchCV
+import numpy as np
+from config import ROOT_DIR
+
+from sklearn.externals import joblib
+from datetime import datetime
+import git
 
 
-class LoLPredictor(CommonPredictor):
-
+class LoLPredictor:
     def __init__(self):
-        super().__init__()
-        self.training_columns = \
-            ['avg', 'gold_per_minute', 'gold_differential_per_minute',
-             'gold_differential_at_15', 'cs_per_minute',
-             'cs_differential_at_15', 'tower_differential_at_15',
-             'tower_ratio', 'first_tower', 'damage_per_minute',
-             'kills_per_game', 'deaths_per_game', 'kda', 'dragon_game',
-             'dragons_15', 'nashors_game', 'wards_per_minute',
-             'c_avg', 'c_gold_per_minute',
-             'c_gold_differential_per_minute', 'c_gold_differential_at_15',
-             'c_cs_differential_at_15', 'c_tower_differential_at_15',
-             'c_tower_ratio', 'c_first_tower', 'c_damage_per_minute',
-             'c_kills_per_game', 'c_deaths_per_game', 'c_kda', 'c_dragon_game',
-             'c_dragons_15', 'c_nashors_game']
-        self.y_col_name = "main_team_won"
+        self.name = type(self).__name__
+        self.X, self.y, self.df = create_lol_dataset()
+        try:
+            self.model = self.load_saved_model()
+        except:
+            pass
 
-    def train_new_model(self, df: pd.DataFrame):
+    @staticmethod
+    def get_model_param_grid():
+        # Number of trees in random forest
+        n_estimators = [int(x) for x in np.linspace(start=200, stop=2000, num=10)]
+        # Number of features to consider at every split
+        max_features = ['auto', 'sqrt']
+        # Maximum number of levels in tree
+        max_depth = [int(x) for x in np.linspace(10, 110, num=11)]
+        max_depth.append(None)
+        # Minimum number of samples required to split a node
+        min_samples_split = [2, 5, 10]
+        # Minimum number of samples required at each leaf node
+        min_samples_leaf = [1, 2, 4]
+        # Method of selecting samples for training each tree
+        bootstrap = [True, False]
+        # Create the random grid
+        return {'n_estimators': n_estimators,
+                'max_features': max_features,
+                'max_depth': max_depth,
+                'min_samples_split': min_samples_split,
+                'min_samples_leaf': min_samples_leaf,
+                'bootstrap': bootstrap}
+    @staticmethod
+    def evaluate(model, x_test, y_t):
+        predictions = model.predict(x_test)
+        probabilities = model.predict_proba(x_test)
 
-        y = df.pop(self.y_col_name)
-        self.X_train, self.X_test, self.y_train, self.y_test =\
-            train_test_split(df, y, test_size=0.2, random_state=7)
-        #from sklearn.ensemble import GradientBoostingClassifier
-        #model = GradientBoostingClassifier()
-        model = RandomForestClassifier(n_estimators=200, max_depth=12, max_leaf_nodes=12, n_jobs=100)
-        model.fit(self.X_train, self.y_train)
-        self.new_model = model
-        print("trained new model")
+        true_probabilities = probabilities[:, 1]
+        mse = mean_squared_error(y_t, true_probabilities)
+        mae = median_absolute_error(y_t, true_probabilities)
 
-    def train_on_whole(self):
-        model = RandomForestClassifier(n_estimators=200, max_depth=12, max_leaf_nodes=12, n_jobs=100)
-        model.fit(pd.concat([self.X_train, self.X_test]),
-                  pd.concat([self.y_train, self.y_test]))
-        return model
+        acc_score = accuracy_score(y_t, predictions)
+        auc_score = roc_auc_score(y_t, predictions)
+        classification_score = classification_report(y_t, predictions)
+        confusion_score = confusion_matrix(y_t, predictions)
+        f_score = f1_score(y_t, predictions)
+
+        print(f"Evalutation stats are:\naccuracy score: {acc_score} \n auc_score: {auc_score} \n "
+              f"classification_report{classification_score}\n"
+              f"conf_score: {confusion_score}\n f_score: {f_score}\n"
+              f"mse: {mse}  and mae {mae}")
+
+    def train_model(self):
+        reducer = SelectKBest(k=10)
+
+        forrest_params = {
+            "forrest__" + key: value for key, value in self.get_model_param_grid().items()}
+
+        model = RandomForestClassifier()
+        params = forrest_params
+
+        # from sklearn.ensemble import GradientBoostingClassifier
+        #
+        # model = GradientBoostingClassifier()
+        # params = {}
 
 
-if __name__ == "__main__":
-    DB_URL = f"{DATABASE_URI}lol"
-    ENGINE = create_engine(DB_URL)
 
-    dropcols = ["match_url", "ffs", "name", "c_match_url", "c_ffs", "c_name",
-                "first_blood", "herald_game", "wards_cleared_per_minute", "pct_wards_cleared",
-                "c_cs_per_minute", "c_first_blood", "c_wards_per_minute", "c_wards_cleared_per_minute",
-                "c_average_game_duration", "average_game_duration" ,"c_herald_game", "c_pct_wards_cleared" ]
-    df = pd.read_sql_table("averaged_predictions", con=ENGINE)
+        pipe = Pipeline(
+            [('reduce_dim', reducer), ('forrest', model)]
+        )
 
-    df = df.drop(dropcols, axis=1)
-    df = df.fillna(0)
+        randomized_pipe = RandomizedSearchCV(pipe, params, n_iter=100, cv=3,
+                                verbose=2, n_jobs=2)
+
+        # randomized_pipe = GridSearchCV(pipe, param_grid)
+        randomized_pipe.fit(self.X, self.y)
+        self.model = randomized_pipe
+        return randomized_pipe
+
+    def load_saved_model(self):
+        return joblib.load(f'{ROOT_DIR}/data/{self.name}.joblib')['model']
+
+    def save_model(self, classifier):
+
+        if input("U are going to rewrite model. Are you sure?"
+                 " Spec 'yes' if so") == "yes":
+            repo = git.Repo(search_parent_directories=True)
+            sha = repo.head.object.hexsha
+            toBePersisted = dict({
+                'model': classifier,
+                'metadata': {
+                    'name': 'Lol Pipepiline Model',
+                    'author': 'Pavel Klammert',
+                    'date': datetime.now(),
+                    'source_code_version': sha,
+                    'metrics': {
+                        "acc": classifier.best_score_
+                    }
+                }
+            })
+
+            joblib.dump(toBePersisted, f'{ROOT_DIR}/data/{self.name}.joblib')
+            return True
+        else:
+            print("New model not set")
+            return False
+
+    def predict_one_match(self, row):
+        clf = self.model
+        labels = clf.classes_
+        probabilities = clf.predict_proba(row)
+        return {labels[0]: probabilities[0][0],
+                labels[1]: probabilities[0][1]}
 
 
-    # df = pd.read_sql_table("basic_predictions", con=ENGINE)
-    #
-    #
-    # from LOL_formatter import Formatter
-    #
-    # def format_train_df( train_dataset):
-    #     formatter = Formatter(train_dataset)
-    #     df = formatter.main_reformat()
-    #     df = formatter.drop_for_predict(df)
-    #     # names NEEDED for DA
-    #
-    #     df.drop(["name", "c_name"], axis=1, inplace=True)
-    #     return df
-    #
-    # df = format_train_df(df)
-
-    pred = LoLPredictor()
-    pred.train_new_model(df)
-    print(pred.new_model.score(pred.X_test, pred.y_test))
-
-    for name, importance in zip(list(df.columns),
-                                pred.new_model.feature_importances_):
-        ...
-        print(name, "=", importance)
-
-    #pred.save_model(pred.train_on_whole())
+if __name__ == '__main__':
+    lol = LoLPredictor()
+    trained_model = lol.train_model()
+    lol.save_model(trained_model)
     print()
+
+
+

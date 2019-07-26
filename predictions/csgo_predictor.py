@@ -42,43 +42,10 @@ class CSGOPredictor(CommonPredictor):
 
 
 if __name__ == "__main__":
-    def old():
-        df = pd.read_sql_table('stats', con=ENGINE)
-        df.fillna(0, inplace=True)
-        #y = df.pop("t1_winner")
-        df.drop(["t1_id", "t2_id", "kast", "c_kast", "a", "c_a"], axis=1, inplace=True)
-
-        pred = CSGOPredictor()
-        pred.train_new_model(df)
-        print(pred.eval_predict_proba())
-
-        print(pred.check_differences(pred.new_model))
-        pred.save_model(pred.train_on_whole())
-        model = pred.new_model
-        for name, importance in zip(list(df.columns),
-                                    model.feature_importances_):
-            ...
-            print(name, "=", importance)
-        print()
-
 
     df = pd.read_sql_table('stats', con=ENGINE)
     df.fillna(0, inplace=True)
-    # y = df.pop("t1_winner")
-    df.drop(["t1_id", "t2_id", "kast", "c_kast", "a", "c_a"], axis=1,
-            inplace=True)
-    from xgboost import XGBClassifier
-
-    pred = CSGOPredictor()
-    model = XGBClassifier()
-    pred.train_new_model(df, model)
-    print(pred.eval_predict_proba())
-
-    print(pred.check_differences(pred.new_model))
-    #pred.save_model(pred.train_on_whole())
-    model = pred.new_model
-    for name, importance in zip(list(df.columns),
-                                model.feature_importances_):
-        ...
-        print(name, "=", importance)
     print()
+    #y = df.pop("t1_winner")
+    #df.drop(["t1_id", "t2_id", "kast", "c_kast", "a", "c_a"], axis=1, inplace=True)
+

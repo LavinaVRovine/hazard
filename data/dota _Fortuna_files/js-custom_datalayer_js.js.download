@@ -1,0 +1,99 @@
+
+;(function () {
+	window.dataLayer = window.dataLayer || [];	
+
+  window.customDatalayer = {
+    REGISTRATION: {
+      field: function (evt) {
+        const field_ = (evt.target || evt).name;
+        if (field_) {
+          pushData('regpage_field', {
+            field: field_
+          });
+        }
+      },
+
+      form_success: function() {
+        pushData('registration_success')
+      },
+
+      email_confirmed: function () {
+        pushData('registration_emailConfirmation');
+      },
+
+      field_error: function (evt, error) {
+        const field_ = (evt.target || evt).name;
+        if (field_ && error) {
+          pushData('regpage_FailedField', {
+            field: field_,
+            error: error
+          }); 
+        }
+      },
+      
+      form_errors: function(errors) {
+        let errors_ = [];
+        for(let i = 0, l = errors.length; i < l; i++) {
+          errors_.push({
+            field: errors[i].field,
+            error: errors[i].text
+          })
+        }
+        pushData('registration_fieldErrors', {
+          errors: errors_
+        });
+      }
+    },
+    LOGIN: {
+      success: function (userData) {
+        handlerWithData('login_success', userData); 
+      },
+      failed: function () {
+        pushData('login_failed'); 
+      },
+      logout: function (userData) {
+        handlerWithData('logout_success', userData); 
+      }
+    },
+    DEPOSIT: {
+      success: function (data) {
+        handlerWithData('deposit_success', data); 
+      },
+      failed: function (data) {
+        handlerWithData('deposit_failed', data); 
+      }
+    },
+    USER: {
+      verify: function(section, data) {
+        handlerWithData(section, data);
+      }
+    },
+    BETSLIP: {
+      addTo: function (data) {
+        handlerWithData('betslip_addTo', data);
+      },
+      accepted: function (data) {
+        handlerWithData('betslip_complete', data);
+      }
+    }
+
+  };
+
+  function handlerWithData (section, data) {
+    if (section && data) {
+      pushData(section, data);
+    }
+  }
+
+  function pushData (eventName, data) {
+    if (!dataLayer || typeof dataLayer.push !== 'function') {
+      return null;
+    }
+    let payload_ = { event: eventName };
+    if (typeof data === 'object') {
+      payload_.data = data
+    }
+
+    dataLayer.push(payload_);
+  }
+})();
