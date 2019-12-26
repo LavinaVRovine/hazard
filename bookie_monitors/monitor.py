@@ -29,7 +29,7 @@ class Monitor:
     def get_response(self, url):
 
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:65.0) Gecko/20100101 Firefox/65.0',
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:65.0) Gecko/20100101 Firefox/65.0",
         }
 
         response = self.session.get(url, headers=headers)
@@ -58,9 +58,7 @@ class Monitor:
         return match_title_series.str.split(" - ", 1, expand=True)
 
     def get_biding_info(self):
-        return self.matches[
-            ["team1", "team2", "team_1_rate", "team_2_rate", "datum"]
-        ]
+        return self.matches[["team1", "team2", "team_1_rate", "team_2_rate", "datum"]]
 
     @staticmethod
     def check_db(db_url):
@@ -77,8 +75,7 @@ class Monitor:
         df["type"] = self.game_type
         df["game"] = self.game_name
         df["my_bid_status"] = None
-        df.to_sql("bookie_stats", con=self.engine, if_exists="append",
-                  index=False)
+        df.to_sql("bookie_stats", con=self.engine, if_exists="append", index=False)
 
 
 if __name__ == "__main__":

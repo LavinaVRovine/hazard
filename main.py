@@ -10,8 +10,9 @@ from predictions.dota_predictor import DotaPredictor
 from predictions.csgo_predictor import CSGOPredictor
 from csgo_db_loader.get_team_stats import get_csgo_data
 from bookie_monitors.ifortuna_cz import IfortunaCz  # needed, dont remove
-pd.set_option('display.width', 1000)
-pd.set_option('display.max_columns', 50)
+
+pd.set_option("display.width", 1000)
+pd.set_option("display.max_columns", 50)
 
 # script's purpose is to predict who ll win e-sport game and
 # suggest action and amount to bet
@@ -44,13 +45,10 @@ def create_decider(game, row, db_location):
 
 def get_bookie_stats(bookie, game, game_url):
     global_vars = globals()
-    assert bookie in global_vars, f"Cant instantialize " \
-        f"class for bookie {bookie}"
-    monitor = global_vars[bookie](bookie,
-                                  game_name=game,
-                                  logger=logging,
-                                  game_url=game_url
-                                  )
+    assert bookie in global_vars, f"Cant instantialize " f"class for bookie {bookie}"
+    monitor = global_vars[bookie](
+        bookie, game_name=game, logger=logging, game_url=game_url
+    )
     # goes to bookie page and downloads new stats etc.
     monitor.get_bookie_info()
     if monitor.matches is None:
@@ -78,7 +76,7 @@ def main(game):
             output_data.append(
                 dict(
                     decision_maker.decide_match_action(predictor),
-                    **{"date": row["datum"]}
+                    **{"date": row["datum"]},
                 )
             )
 
@@ -89,14 +87,19 @@ def main(game):
 
 
 @click.command()
-@click.option('--compare_odds', '-co', default=['all'],
-              help='Which game(s) to compare',
-              type=click.Choice(["all", "lol", "dota", "csgo"]),
-              multiple=True, show_default=True)
+@click.option(
+    "--compare_odds",
+    "-co",
+    default=["all"],
+    help="Which game(s) to compare",
+    type=click.Choice(["all", "lol", "dota", "csgo"]),
+    multiple=True,
+    show_default=True,
+)
 def compare_odds(**kwargs):
 
-    if 'game_name' in kwargs:
-        games = kwargs['game_name']
+    if "game_name" in kwargs:
+        games = kwargs["game_name"]
     else:
         games = ["all"]
 
@@ -112,9 +115,9 @@ def compare_odds(**kwargs):
                     main(key)
 
 
-if __name__ == '__main__':
-    #main("Dota")
-    #exit()
-    #compare_odds()
-    #main("CS:GO")
+if __name__ == "__main__":
+    # main("Dota")
+    # exit()
+    # compare_odds()
+    # main("CS:GO")
     compare_odds()

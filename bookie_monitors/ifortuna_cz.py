@@ -8,7 +8,6 @@ from bookie_monitors.monitor import Monitor
 
 
 class IfortunaCz(Monitor):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._interesting_bet_options = ["zápas"]
@@ -28,7 +27,8 @@ class IfortunaCz(Monitor):
                 time.sleep(wait_time)
                 print(
                     f"Waiting {wait_time} because ajax "
-                    f"doc seems corrupted: {ajax_doc}")
+                    f"doc seems corrupted: {ajax_doc}"
+                )
         return False
 
     def use_saved_file(self):
@@ -43,13 +43,14 @@ class IfortunaCz(Monitor):
 
     def get_parse_page(self):
         response = super().get_response(self.gaming_page)
-        return BeautifulSoup(response.content, 'html.parser')
+        return BeautifulSoup(response.content, "html.parser")
 
     @staticmethod
     def is_invalid_tournament(t_title):
-        return \
-            "ukončení podpory starých" in t_title.text or \
-            "Živá hra online" in t_title.text
+        return (
+            "ukončení podpory starých" in t_title.text
+            or "Živá hra online" in t_title.text
+        )
 
     def process_tournament_table(self, table):
         tournament_title = table.find("h3")
@@ -84,7 +85,6 @@ class IfortunaCz(Monitor):
         """Kinda stupidly made...if searching for dota, consider only dota"""
         return " | " + self.game_name in title.text
 
-
     def search_for_filter_link(self, table_div):
         # magic IDs of tournaments
         url_filters = []
@@ -116,12 +116,20 @@ class IfortunaCz(Monitor):
             return
         # elif "celkov" not in title.text:
         #   return
-        if "celkový vítěz" in title.text or "celkovy" in title.text or "elkový ví" in title.text:
+        if (
+            "celkový vítěz" in title.text
+            or "celkovy" in title.text
+            or "elkový ví" in title.text
+        ):
             return
         link, url_values = self.search_for_filter_link(table_div)
-        ajax_url = self.gaming_page + self.parse_tournament_name(
-            link) + "?action=filter_by_subgame&itemTypeId=" + ";".join(
-            url_values) + ";&_ajax=1"
+        ajax_url = (
+            self.gaming_page
+            + self.parse_tournament_name(link)
+            + "?action=filter_by_subgame&itemTypeId="
+            + ";".join(url_values)
+            + ";&_ajax=1"
+        )
         return ajax_url
 
     def is_relevant_bid_type(self, bet_type_title):
@@ -129,9 +137,7 @@ class IfortunaCz(Monitor):
 
     @staticmethod
     def parse_tournament_name(tournament_link):
-        return tournament_link[
-               tournament_link.rfind("/"):tournament_link.rfind("?")
-               ]
+        return tournament_link[tournament_link.rfind("/") : tournament_link.rfind("?")]
 
     @staticmethod
     def is_special_table(table):
@@ -146,17 +152,20 @@ class IfortunaCz(Monitor):
         if self.is_special_table(df):
             print("who cares")
             return {"table_name": df.columns[0], "result": df}
-        df[["game_title", "game_id"]] = df.iloc[:, 0].str.rsplit(" ", 1,
-                                                                 expand=True)
+        df[["game_title", "game_id"]] = df.iloc[:, 0].str.rsplit(" ", 1, expand=True)
         df[["team1", "team2"]] = super().split_match_to_teams(df["game_title"])
-        df.rename({"1": "team_1_rate", "2": "team_2_rate"}, axis=1,
-                  inplace=True)
+        df.rename({"1": "team_1_rate", "2": "team_2_rate"}, axis=1, inplace=True)
         return df
 
 
 if __name__ == "__main__":
     import logging
-    c = IfortunaCz("ifortuna", game_name="CS:GO", logger=logging,
-                   game_url="https://www.ifortuna.cz/cz/sazeni/progaming")
+
+    c = IfortunaCz(
+        "ifortuna",
+        game_name="CS:GO",
+        logger=logging,
+        game_url="https://www.ifortuna.cz/cz/sazeni/progaming",
+    )
     c.get_bookie_info()
     print()

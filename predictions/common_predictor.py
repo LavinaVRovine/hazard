@@ -3,12 +3,12 @@ import numpy as np
 from sklearn.externals import joblib
 from config import ROOT_DIR
 from abc import ABC, abstractmethod
-pd.set_option('display.width', 1000)
-pd.set_option('display.max_columns', 50)
+
+pd.set_option("display.width", 1000)
+pd.set_option("display.max_columns", 50)
 
 
 class CommonPredictor(ABC):
-
     def __init__(self):
         self.scaler = None
         self.name = type(self).__name__
@@ -17,10 +17,9 @@ class CommonPredictor(ABC):
         except:
             pass
         self.new_model = None
-        self.X_train, self.X_test, self.y_train, self.y_test = \
-            (None, None, None, None)
+        self.X_train, self.X_test, self.y_train, self.y_test = (None, None, None, None)
         self.training_columns = []
-        self.y_col_name = ''
+        self.y_col_name = ""
 
     def compare_models(self):
 
@@ -51,18 +50,22 @@ class CommonPredictor(ABC):
         t["predicted"] = np.where(t[False] > 0.5, False, True)
         wrong = t[t[self.y_col_name] != t["predicted"]]
         extremely_wrong = wrong[(wrong[False] > 0.8) | (wrong[False] < 0.2)]
-        return f"got {len(extremely_wrong)} extremely wrong from {len(real)}" \
-               f" which is {len(extremely_wrong)/len(real):.3f}%" \
-               f" avg_difference to 0.5 guess is {abs(t.iloc[:, 1] -0.5).mean()}"
+        return (
+            f"got {len(extremely_wrong)} extremely wrong from {len(real)}"
+            f" which is {len(extremely_wrong)/len(real):.3f}%"
+            f" avg_difference to 0.5 guess is {abs(t.iloc[:, 1] -0.5).mean()}"
+        )
 
     def load_saved_model(self):
-        return joblib.load(f'{ROOT_DIR}/data/{self.name}.joblib')
+        return joblib.load(f"{ROOT_DIR}/data/{self.name}.joblib")
 
     def save_model(self, classifier):
 
-        if input("U are going to rewrite model. Are you sure?"
-                 " Spec 'yes' if so") == "yes":
-            joblib.dump(classifier, f'{ROOT_DIR}/data/{self.name}.joblib')
+        if (
+            input("U are going to rewrite model. Are you sure?" " Spec 'yes' if so")
+            == "yes"
+        ):
+            joblib.dump(classifier, f"{ROOT_DIR}/data/{self.name}.joblib")
             return True
         else:
             print("New model not set")
@@ -75,8 +78,7 @@ class CommonPredictor(ABC):
         row = row[self.training_columns]
 
         probabilities = clf.predict_proba(row)
-        return {labels[0]: probabilities[0][0],
-                labels[1]: probabilities[0][1]}
+        return {labels[0]: probabilities[0][0], labels[1]: probabilities[0][1]}
 
     @abstractmethod
     def train_on_whole(self):

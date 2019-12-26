@@ -6,17 +6,27 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestClassifier
 from predictions.lol_create_dataset import create_lol_dataset
-pd.set_option('display.width', 1000)
-pd.set_option('display.max_columns', 50)
+
+pd.set_option("display.width", 1000)
+pd.set_option("display.max_columns", 50)
 from sklearn.feature_selection import SelectKBest
-from sklearn.metrics import accuracy_score, roc_auc_score, classification_report, confusion_matrix, f1_score, median_absolute_error, mean_squared_error
+from sklearn.metrics import (
+    accuracy_score,
+    roc_auc_score,
+    classification_report,
+    confusion_matrix,
+    f1_score,
+    median_absolute_error,
+    mean_squared_error,
+)
 from sklearn.model_selection import RandomizedSearchCV
 import numpy as np
 from config import ROOT_DIR
 
 from sklearn.externals import joblib
 from datetime import datetime
-#import git
+
+# import git
 
 
 class LoLPredictor:
@@ -33,7 +43,7 @@ class LoLPredictor:
         # Number of trees in random forest
         n_estimators = [int(x) for x in np.linspace(start=200, stop=2000, num=10)]
         # Number of features to consider at every split
-        max_features = ['auto', 'sqrt']
+        max_features = ["auto", "sqrt"]
         # Maximum number of levels in tree
         max_depth = [int(x) for x in np.linspace(10, 110, num=11)]
         max_depth.append(None)
@@ -44,12 +54,15 @@ class LoLPredictor:
         # Method of selecting samples for training each tree
         bootstrap = [True, False]
         # Create the random grid
-        return {'n_estimators': n_estimators,
-                'max_features': max_features,
-                'max_depth': max_depth,
-                'min_samples_split': min_samples_split,
-                'min_samples_leaf': min_samples_leaf,
-                'bootstrap': bootstrap}
+        return {
+            "n_estimators": n_estimators,
+            "max_features": max_features,
+            "max_depth": max_depth,
+            "min_samples_split": min_samples_split,
+            "min_samples_leaf": min_samples_leaf,
+            "bootstrap": bootstrap,
+        }
+
     @staticmethod
     def evaluate(model, x_test, y_t):
         predictions = model.predict(x_test)
@@ -65,16 +78,20 @@ class LoLPredictor:
         confusion_score = confusion_matrix(y_t, predictions)
         f_score = f1_score(y_t, predictions)
 
-        print(f"Evalutation stats are:\naccuracy score: {acc_score} \n auc_score: {auc_score} \n "
-              f"classification_report{classification_score}\n"
-              f"conf_score: {confusion_score}\n f_score: {f_score}\n"
-              f"mse: {mse}  and mae {mae}")
+        print(
+            f"Evalutation stats are:\naccuracy score: {acc_score} \n auc_score: {auc_score} \n "
+            f"classification_report{classification_score}\n"
+            f"conf_score: {confusion_score}\n f_score: {f_score}\n"
+            f"mse: {mse}  and mae {mae}"
+        )
 
     def train_model(self):
         reducer = SelectKBest(k=10)
 
         forrest_params = {
-            "forrest__" + key: value for key, value in self.get_model_param_grid().items()}
+            "forrest__" + key: value
+            for key, value in self.get_model_param_grid().items()
+        }
 
         model = RandomForestClassifier()
         params = forrest_params
@@ -84,14 +101,11 @@ class LoLPredictor:
         # model = GradientBoostingClassifier()
         # params = {}
 
+        pipe = Pipeline([("reduce_dim", reducer), ("forrest", model)])
 
-
-        pipe = Pipeline(
-            [('reduce_dim', reducer), ('forrest', model)]
+        randomized_pipe = RandomizedSearchCV(
+            pipe, params, n_iter=100, cv=3, verbose=2, n_jobs=2
         )
-
-        randomized_pipe = RandomizedSearchCV(pipe, params, n_iter=100, cv=3,
-                                verbose=2, n_jobs=2)
 
         # randomized_pipe = GridSearchCV(pipe, param_grid)
         randomized_pipe.fit(self.X, self.y)
@@ -99,28 +113,30 @@ class LoLPredictor:
         return randomized_pipe
 
     def load_saved_model(self):
-        return joblib.load(f'{ROOT_DIR}/data/{self.name}.joblib')['model']
+        return joblib.load(f"{ROOT_DIR}/data/{self.name}.joblib")["model"]
 
     def save_model(self, classifier):
 
-        if input("U are going to rewrite model. Are you sure?"
-                 " Spec 'yes' if so") == "yes":
+        if (
+            input("U are going to rewrite model. Are you sure?" " Spec 'yes' if so")
+            == "yes"
+        ):
             repo = git.Repo(search_parent_directories=True)
             sha = repo.head.object.hexsha
-            toBePersisted = dict({
-                'model': classifier,
-                'metadata': {
-                    'name': 'Lol Pipepiline Model',
-                    'author': 'Pavel Klammert',
-                    'date': datetime.now(),
-                    'source_code_version': sha,
-                    'metrics': {
-                        "acc": classifier.best_score_
-                    }
+            toBePersisted = dict(
+                {
+                    "model": classifier,
+                    "metadata": {
+                        "name": "Lol Pipepiline Model",
+                        "author": "Pavel Klammert",
+                        "date": datetime.now(),
+                        "source_code_version": sha,
+                        "metrics": {"acc": classifier.best_score_},
+                    },
                 }
-            })
+            )
 
-            joblib.dump(toBePersisted, f'{ROOT_DIR}/data/{self.name}.joblib')
+            joblib.dump(toBePersisted, f"{ROOT_DIR}/data/{self.name}.joblib")
             return True
         else:
             print("New model not set")
@@ -130,15 +146,11 @@ class LoLPredictor:
         clf = self.model
         labels = clf.classes_
         probabilities = clf.predict_proba(row)
-        return {labels[0]: probabilities[0][0],
-                labels[1]: probabilities[0][1]}
+        return {labels[0]: probabilities[0][0], labels[1]: probabilities[0][1]}
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     lol = LoLPredictor()
     trained_model = lol.train_model()
     lol.save_model(trained_model)
     print()
-
-
-

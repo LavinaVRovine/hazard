@@ -1,14 +1,13 @@
-
-
 import pandas as pd
 from sqlalchemy import create_engine
 from config import DATABASE_URI
+
 DB_URL = f"{DATABASE_URI}csgo"
 ENGINE = create_engine(DB_URL)
 
 
-pd.set_option('display.width', 1000)
-pd.set_option('display.max_columns', 50)
+pd.set_option("display.width", 1000)
+pd.set_option("display.max_columns", 50)
 
 
 team_stats_sql = """SELECT 
@@ -50,13 +49,18 @@ def get_csgo_data():
     matches = pd.read_sql(ug_sql, con=ENGINE)
     against_each_other_df = pd.read_sql(winrate_against_each_other_sql, con=ENGINE)
 
-    df = matches.merge(team_winrate, left_on="team_1_id", right_on="team_id").merge(team_winrate, left_on="team_2_id",
-                                                                                    right_on="team_id",
-                                                                                    suffixes=("_n", "_c"))
-    df = df.merge(team_stats, left_on="team_1_id", right_on="team_id").merge(team_stats, left_on="team_2_id",
-                                                                             right_on="team_id", suffixes=("_n", "_c"))
-    df = df.merge(against_each_other_df, left_on=["team_1_id", "team_2_id"], right_on=["team_1_id", "team_2_id"],
-                  suffixes=("", "AEO"))
+    df = matches.merge(team_winrate, left_on="team_1_id", right_on="team_id").merge(
+        team_winrate, left_on="team_2_id", right_on="team_id", suffixes=("_n", "_c")
+    )
+    df = df.merge(team_stats, left_on="team_1_id", right_on="team_id").merge(
+        team_stats, left_on="team_2_id", right_on="team_id", suffixes=("_n", "_c")
+    )
+    df = df.merge(
+        against_each_other_df,
+        left_on=["team_1_id", "team_2_id"],
+        right_on=["team_1_id", "team_2_id"],
+        suffixes=("", "AEO"),
+    )
     return df
 
 
@@ -65,7 +69,5 @@ def get_csgo_data_no_ids():
     return df.copy().drop([c for c in df.columns if "_id" in c], axis=1).dropna()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     get_csgo_data()
-
-

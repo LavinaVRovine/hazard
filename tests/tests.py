@@ -1,7 +1,7 @@
 import pytest
 from decisions.decider import Decider
 
-#TODO: hmmm, asi nutny refaktoring
+# TODO: hmmm, asi nutny refaktoring
 
 
 @pytest.fixture()

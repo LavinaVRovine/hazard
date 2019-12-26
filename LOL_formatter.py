@@ -77,21 +77,49 @@ class Formatter:
 
     def drop_for_predict(self, df):
         df = df.copy()
-        df.drop(["win_to_lose", "season", "region", "c_match_url", "c_season",
-                 "c_region", "match_url", "ffs", "dragon_game", "herald_game",
-                 "nashors_game",
-                 "c_dragon_game", "c_herald_game", "c_nashors_game",
-                 "c_win_to_lose"], axis=1, inplace=True)
-        #df.drop(["name", "c_name"], axis=1, inplace=True)
+        df.drop(
+            [
+                "win_to_lose",
+                "season",
+                "region",
+                "c_match_url",
+                "c_season",
+                "c_region",
+                "match_url",
+                "ffs",
+                "dragon_game",
+                "herald_game",
+                "nashors_game",
+                "c_dragon_game",
+                "c_herald_game",
+                "c_nashors_game",
+                "c_win_to_lose",
+            ],
+            axis=1,
+            inplace=True,
+        )
+        # df.drop(["name", "c_name"], axis=1, inplace=True)
         return df
 
     def drop_for_main(self, df):
         df = df.copy()
-        df.drop(["win_to_lose", "season", "region", "c_season",
-                 "c_region",  "dragon_game", "herald_game",
-                 "nashors_game",
-                 "c_dragon_game", "c_herald_game", "c_nashors_game",
-                 "c_win_to_lose"], axis=1, inplace=True)
-        df.drop(["name", "c_name", "team_id", "c_team_id"],
-                axis=1, inplace=True)
+        df.drop(
+            [
+                "win_to_lose",
+                "season",
+                "region",
+                "c_season",
+                "c_region",
+                "dragon_game",
+                "herald_game",
+                "nashors_game",
+                "c_dragon_game",
+                "c_herald_game",
+                "c_nashors_game",
+                "c_win_to_lose",
+            ],
+            axis=1,
+            inplace=True,
+        )
+        df.drop(["name", "c_name", "team_id", "c_team_id"], axis=1, inplace=True)
         return df

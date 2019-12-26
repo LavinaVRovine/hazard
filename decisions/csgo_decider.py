@@ -5,7 +5,6 @@ import traceback
 
 
 class CSGODecider(Decider):
-
     def __init__(self, match_row, db_location):
         super().__init__(match_row, db_location)
         self.df = get_csgo_data()
@@ -25,12 +24,15 @@ class CSGODecider(Decider):
 
         if team_name == "ex-Fragsters" or team_name == "ex-fragsters":
             team_name = "fragsters"
-        elif team_name == 'Ninjas in Pyjamas' or team_name == 'ninjas in pyjamas':
+        elif team_name == "Ninjas in Pyjamas" or team_name == "ninjas in pyjamas":
             team_name = "nip"
-        elif team_name == 'LDLC.com' or team_name == 'ldlc.com':
+        elif team_name == "LDLC.com" or team_name == "ldlc.com":
             team_name = "ldlc"
 
-        df = pd.read_sql("SELECT * FROM team where name = '{}' LIMIT 1".format(team_name,), con=self.engine)
+        df = pd.read_sql(
+            "SELECT * FROM team where name = '{}' LIMIT 1".format(team_name,),
+            con=self.engine,
+        )
         if len(df) == 0:
             return
         return int(df.iloc[0, 0])
@@ -39,8 +41,9 @@ class CSGODecider(Decider):
         team_id = self.lookup_team_id(team_name)
         if team_id is None:
             return []
-        exact_match = pd.read_sql("SELECT * FROM team_stats_filtered where team_id = %s" % (team_id,),
-            con=self.engine
+        exact_match = pd.read_sql(
+            "SELECT * FROM team_stats_filtered where team_id = %s" % (team_id,),
+            con=self.engine,
         )
         return exact_match
 
@@ -52,21 +55,22 @@ class CSGODecider(Decider):
         # TODO. ah, tohle je nakonec vlastne nedobre, jelikoz ted muzu mit jen tymy, ktere proti sobe nekdy hraly
         #  mel bych tam pak pridat moznost
         # TODO. zaroven nezkousim t2 vs t1, coz je u me neco jineho... f its a mess
-        row = self.df[(self.df["team_1_id"] == main_team_id) & (self.df["team_2_id"] == competitor_id)]
+        row = self.df[
+            (self.df["team_1_id"] == main_team_id)
+            & (self.df["team_2_id"] == competitor_id)
+        ]
         # TODO REMO|VE TESting
-        #if len(row) == 0:
+        # if len(row) == 0:
 
-         #   row = self.df.sample(1)
+        #   row = self.df.sample(1)
         return row
 
-
     def decide_match_action(self, predictor):
-        #match_row = self.create_match_stats_row()
+        # match_row = self.create_match_stats_row()
         try:
             match_row = self.create_match_stats_row()
         except ValueError:
             return {"team1": self.team_1_name, "team2": self.team_2_name}
-
 
         try:
             match_row = match_row[predictor.training_columns]
@@ -75,19 +79,22 @@ class CSGODecider(Decider):
             # now does basically nothing :)
             decision = self.compare_ods(preds[True])
 
-            output = \
-                {"team1": self.team_1_name, "team2": self.team_2_name,
-                 "preds": preds, "decision": decision}
+            output = {
+                "team1": self.team_1_name,
+                "team2": self.team_2_name,
+                "preds": preds,
+                "decision": decision,
+            }
 
             print(
                 f"prediction for {self.team_1_name} againt competitor {self.team_2_name}"
-                f" are {preds}   {decision}")
+                f" are {preds}   {decision}"
+            )
             return output
         except:
             print(
                 f"something went wrong for  {self.team_1_name} againt"
-                f" competitor {self.team_2_name}")
+                f" competitor {self.team_2_name}"
+            )
             traceback.print_exc()
             return {"team1": self.team_1_name, "team2": self.team_2_name}
-
-

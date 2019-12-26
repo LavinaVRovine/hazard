@@ -2,8 +2,8 @@ import pandas as pd
 from sqlalchemy import create_engine
 from config import DATABASE_URI
 
-pd.set_option('display.width', 1000)
-pd.set_option('display.max_columns', 50)
+pd.set_option("display.width", 1000)
+pd.set_option("display.max_columns", 50)
 DB_URL = f"{DATABASE_URI}csgo"
 ENGINE = create_engine(DB_URL)
 
@@ -61,8 +61,6 @@ team_stats_filtered_sql = """ WITH stats AS (
   GROUP BY stats.team_id;"""
 
 
-
-
 stats_sql = """
  SELECT matches_winner.t1_id,
     matches_winner.t2_id,
@@ -89,5 +87,5 @@ stats_sql = """
      JOIN team_stats_filtered tsf ON matches_winner.t1_id = tsf.team_id
      JOIN team_stats_filtered tsf2 ON matches_winner.t2_id = tsf2.team_id;"""
 
-df = pd.read_sql_table('stats', con=ENGINE)
+df = pd.read_sql_table("stats", con=ENGINE)
 df = df.dropna()

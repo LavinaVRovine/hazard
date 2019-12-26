@@ -6,16 +6,17 @@ import re
 import json
 import pandas as pd
 from config import ROOT_DIR
-pattern = re.compile(r'.*?League of Legends')
+
+pattern = re.compile(r".*?League of Legends")
 
 # WIP
 class ChanceCz(Monitor):
-
     def process_row(self, match_row):
         link = match_row.find_next("a", {"class": "matchName"})
         match = link.text.strip()
-        odds_div = link.find_next("div", {
-            "class": "rowMatchOdds"})  # div class="rowMatchOdds"
+        odds_div = link.find_next(
+            "div", {"class": "rowMatchOdds"}
+        )  # div class="rowMatchOdds"
         data = odds_div.find("div").get("data-ev")
         data_dict = json.loads(data)
         real_data = data_dict["oppRows"][0]["opps"]
@@ -30,9 +31,13 @@ class ChanceCz(Monitor):
 
     def format_bookie_data(self, dict_data):
         df = pd.DataFrame(dict_data).T.reset_index()
-        df.rename({"1":"team_1_rate","2":"team_2_rate", "index": "game_title"}, axis=1, inplace=True)
+        df.rename(
+            {"1": "team_1_rate", "2": "team_2_rate", "index": "game_title"},
+            axis=1,
+            inplace=True,
+        )
         df[["team1", "team2"]] = super().split_match_to_teams(df["game_title"])
-        df["team_1_rate"] = pd.to_numeric(df["team_1_rate"],errors="coerce")
+        df["team_1_rate"] = pd.to_numeric(df["team_1_rate"], errors="coerce")
         df["team_2_rate"] = pd.to_numeric(df["team_2_rate"], errors="coerce")
         if "null" in df.columns:
             df.drop("null", axis=1, inplace=True)
@@ -42,8 +47,8 @@ class ChanceCz(Monitor):
     def get_bookie_info(self):
 
         response = super().get_response(self.gaming_page)
-        soup = BeautifulSoup(response.content, 'html.parser')
-        for title in soup.find_all("h2"):#, text=pattern):
+        soup = BeautifulSoup(response.content, "html.parser")
+        for title in soup.find_all("h2"):  # , text=pattern):
             if "League of Legends" in title.text:
                 rows = title.find_all_next("div", {"class": "rowMatchWrapper"})
                 data = {}
@@ -60,7 +65,12 @@ class ChanceCz(Monitor):
 
 if __name__ == "__main__":
 
-    monitor = ChanceCz("chance", game_name="LoL", logger=logging,  game_url="https://www.chance.cz/kurzy/e-sporty-188")
+    monitor = ChanceCz(
+        "chance",
+        game_name="LoL",
+        logger=logging,
+        game_url="https://www.chance.cz/kurzy/e-sporty-188",
+    )
     monitor.get_bookie_info()
     lal = monitor.get_biding_info()
     monitor.store_matches()

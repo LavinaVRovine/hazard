@@ -2,26 +2,39 @@ import pandas as pd
 from sqlalchemy import create_engine
 from config import DATABASE_URI
 
-pd.set_option('display.width', 1000)
-pd.set_option('display.max_columns', 50)
+pd.set_option("display.width", 1000)
+pd.set_option("display.max_columns", 50)
 
 DB_URL = f"{DATABASE_URI}lol"
 ENGINE = create_engine(DB_URL)
 
 
 def create_lol_dataset():
-    dropcols = ["match_url", "ffs", "name", "c_match_url", "c_ffs", "c_name", ]
+    dropcols = [
+        "match_url",
+        "ffs",
+        "name",
+        "c_match_url",
+        "c_ffs",
+        "c_name",
+    ]
     df = pd.read_sql_table("averaged_predictions", con=ENGINE)
 
-    df["main_team_against_comp_winrate"] = df.apply(lambda x: calculate_team_against_comp_winrate(x, df), axis=1)
+    df["main_team_against_comp_winrate"] = df.apply(
+        lambda x: calculate_team_against_comp_winrate(x, df), axis=1
+    )
     joined = join_with_old(df)
 
-    float_cols = list(joined.select_dtypes(include=['float64']).columns)
+    float_cols = list(joined.select_dtypes(include=["float64"]).columns)
     return joined.loc[:, float_cols], joined.main_team_won_x, joined
 
+
 def calculate_team_against_comp_winrate(row, data_df):
-    df_slice = data_df.loc[((data_df["name"] == row["name"]) & (data_df["c_name"] == row["c_name"]))]
+    df_slice = data_df.loc[
+        ((data_df["name"] == row["name"]) & (data_df["c_name"] == row["c_name"]))
+    ]
     return df_slice.main_team_won.mean()
+
 
 def handle_the_old_way():
     old_df = pd.read_sql_table("basic_predictions", con=ENGINE)
@@ -47,6 +60,7 @@ def handle_the_old_way():
     #             "c_nashors_game_value", "c_nashors_game_pct"]
     # old_cols.append("ffs")
     from formatter import Formatter
+
     df = old_df
     df["win_rate"] = df["win_to_lose"].apply(Formatter.get_winrate)
     df["c_win_rate"] = df["c_win_to_lose"].apply(Formatter.get_winrate)
@@ -75,14 +89,18 @@ def handle_the_old_way():
     df["c_nashors_game"] = df["c_nashors_game"].apply(Formatter.parse_x_slash_game)
     df["c_nashors_game_value"] = df["c_nashors_game"].str[0]
     df["c_nashors_game_pct"] = df["c_nashors_game"].str[1]
-    df["main_team_against_comp_winrate"] = df.apply(lambda x: calculate_team_against_comp_winrate(x, df), axis=1)
-    #old_cols.append("main_team_against_comp_winrate")
+    df["main_team_against_comp_winrate"] = df.apply(
+        lambda x: calculate_team_against_comp_winrate(x, df), axis=1
+    )
+    # old_cols.append("main_team_against_comp_winrate")
     return df
 
 
 def join_with_old(data):
     old_df = handle_the_old_way()
     new_df = data
-    lol_df = pd.merge(old_df, new_df, left_on=["match_url", "name"], right_on=["match_url", "name"])
+    lol_df = pd.merge(
+        old_df, new_df, left_on=["match_url", "name"], right_on=["match_url", "name"]
+    )
     lol_df = lol_df.fillna(0)
     return lol_df
