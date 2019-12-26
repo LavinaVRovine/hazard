@@ -8,7 +8,7 @@ from config import logging, DATABASE_URI, DB_MAPPINGS, IMPLEMENTED_BOOKIES, DEBU
 from predictions.lol_predictor import LoLPredictor
 from predictions.dota_predictor import DotaPredictor
 from predictions.csgo_predictor import CSGOPredictor
-from csgo_db_loader.get_team_stats import get_csgo_data
+from csgo_db_loader.get_csgo_data import get_csgo_data
 from bookie_monitors.ifortuna_cz import IfortunaCz  # needed, dont remove
 
 pd.set_option("display.width", 1000)
@@ -59,6 +59,19 @@ def get_bookie_stats(bookie, game, game_url):
     return monitor.get_biding_info()
 
 
+def process_matches(bookie_stats, game: str, db_location, predictor) -> list:
+    output_data = list()
+    for index, row in bookie_stats.iterrows():
+        decision_maker = create_decider(game, row, db_location)
+        output_data.append(
+            dict(
+                decision_maker.decide_match_action(predictor),
+                **{"date": row["datum"]},
+            )
+        )
+    return output_data
+
+
 def main(game):
     logging.info(f"Started script for game: {game}")
     print(f"Started script for game: {game}")
@@ -69,16 +82,7 @@ def main(game):
         bookie_stats = get_bookie_stats(bookie, game, game_url)
         if bookie_stats is None:
             continue
-        output_data = list()
-        # for each match basically decide what to do
-        for index, row in bookie_stats.iterrows():
-            decision_maker = create_decider(game, row, db_location)
-            output_data.append(
-                dict(
-                    decision_maker.decide_match_action(predictor),
-                    **{"date": row["datum"]},
-                )
-            )
+        output_data = process_matches(bookie_stats, game, db_location, predictor)
 
         if DEBUG:
             print(reformat_output_mail(output_data), game)
@@ -116,8 +120,4 @@ def compare_odds(**kwargs):
 
 
 if __name__ == "__main__":
-    # main("Dota")
-    # exit()
-    # compare_odds()
-    # main("CS:GO")
     compare_odds()

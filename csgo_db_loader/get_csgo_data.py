@@ -21,7 +21,8 @@ FROM   players_stats ps
 join games g on g.game_id = ps.game_id
 GROUP BY ps.team_id;"""
 
-team_winrate_sql = """SELECT u.team_id team_id, sum(u.is_winner::int) wins, count(u.team_id) games, (sum(u.is_winner::int)::float/count(u.team_id)) as winrate
+team_winrate_sql = """SELECT u.team_id team_id, sum(u.is_winner::int) wins, count(u.team_id) games,
+ (sum(u.is_winner::int)::float/count(u.team_id)) as winrate
 
 from
 (select t1_winner is_winner, team_1_id team_id from matches

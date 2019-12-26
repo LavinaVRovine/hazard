@@ -1,6 +1,6 @@
 import pandas as pd
 from decisions.decider import Decider
-from csgo_db_loader.get_team_stats import get_csgo_data
+from csgo_db_loader.get_csgo_data import get_csgo_data
 import traceback
 
 

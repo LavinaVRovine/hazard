@@ -6,7 +6,7 @@ from sklearn.ensemble import RandomForestClassifier
 from predictions.common_predictor import CommonPredictor
 from config import DATABASE_URI
 from mlflow import log_metric, log_param, log_artifact
-from csgo_db_loader.get_team_stats import get_csgo_data
+from csgo_db_loader.get_csgo_data import get_csgo_data
 import mlflow
 
 pd.set_option("display.width", 1000)
