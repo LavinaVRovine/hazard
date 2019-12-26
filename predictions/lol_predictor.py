@@ -16,7 +16,7 @@ from config import ROOT_DIR
 
 from sklearn.externals import joblib
 from datetime import datetime
-import git
+#import git
 
 
 class LoLPredictor:

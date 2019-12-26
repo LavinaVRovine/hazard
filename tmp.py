@@ -1,74 +1,78 @@
-
-from __future__ import print_function
-import numpy as np
-import mxnet as mx
-from mxnet import nd, autograd, gluon
-mx.random.seed(1)
-#ctx = mx.gpu()
-ctx = mx.cpu()
+import pandas as pd
+from csgo_db_loader.get_one_game_team_stats import get_summarize_player_stats_to_team
 
 
-batch_size = 64
-num_inputs = 784
-num_outputs = 10
-def transform(data, label):
-    return nd.transpose(data.astype(np.float32), (2,0,1))/255, label.astype(np.float32)
-train_data = gluon.data.DataLoader(gluon.data.vision.MNIST(train=True, transform=transform),
-                                      batch_size, shuffle=True)
-test_data = gluon.data.DataLoader(gluon.data.vision.MNIST(train=False, transform=transform),
-                                     batch_size, shuffle=False)
+df = pd.read_sql("SELECT match_id, t1_winner from csgo.public.matches join games_teams on matches.match_id = games_teams.m")
 
+exit()
+team_game_stats = get_summarize_player_stats_to_team()
 
-num_fc = 512
-net = gluon.nn.Sequential()
-with net.name_scope():
-    net.add(gluon.nn.Conv2D(channels=20, kernel_size=5, activation='relu'))
-    net.add(gluon.nn.MaxPool2D(pool_size=2, strides=2))
-    net.add(gluon.nn.Conv2D(channels=50, kernel_size=5, activation='relu'))
-    net.add(gluon.nn.MaxPool2D(pool_size=2, strides=2))
-    # The Flatten layer collapses all axis, except the first one, into one axis.
-    net.add(gluon.nn.Flatten())
-    net.add(gluon.nn.Dense(num_fc, activation="relu"))
-    net.add(gluon.nn.Dense(num_outputs))
-
-
-net.collect_params().initialize(mx.init.Xavier(magnitude=2.24), ctx=ctx)
-
-softmax_cross_entropy = gluon.loss.SoftmaxCrossEntropyLoss()
-
-trainer = gluon.Trainer(net.collect_params(), 'sgd', {'learning_rate': .1})
-
-def evaluate_accuracy(data_iterator, net):
-    acc = mx.metric.Accuracy()
-    for i, (data, label) in enumerate(data_iterator):
-        data = data.as_in_context(ctx)
-        label = label.as_in_context(ctx)
-        output = net(data)
-        predictions = nd.argmax(output, axis=1)
-        acc.update(preds=predictions, labels=label)
-    return acc.get()[1]
-
-
-epochs = 10
-smoothing_constant = .01
-
-for e in range(epochs):
-    for i, (data, label) in enumerate(train_data):
-        data = data.as_in_context(ctx)
-        label = label.as_in_context(ctx)
-        with autograd.record():
-            output = net(data)
-            loss = softmax_cross_entropy(output, label)
-        loss.backward()
-        trainer.step(data.shape[0])
-
-        ##########################
-        #  Keep a moving average of the losses
-        ##########################
-        curr_loss = nd.mean(loss).asscalar()
-        moving_loss = (curr_loss if ((i == 0) and (e == 0))
-                       else (1 - smoothing_constant) * moving_loss + smoothing_constant * curr_loss)
-
-    test_accuracy = evaluate_accuracy(test_data, net)
-    train_accuracy = evaluate_accuracy(train_data, net)
-    print("Epoch %s. Loss: %s, Train_acc %s, Test_acc %s" % (e, moving_loss, train_accuracy, test_accuracy))
+"""
+ WITH something AS (
+         SELECT games.index,
+            games.map_name,
+            games.game_id,
+            games.match_id,
+            games.nth_match,
+            matches.index,
+            matches.unix_time,
+            matches.formatted_date,
+            matches.tournament_link,
+            matches.t1_name,
+            matches.t1_winner,
+            matches.t1_won_n_matches,
+            matches.t2_name,
+            matches.t2_winner,
+            matches.t2_won_n_matches,
+            matches.match_id,
+            games_teams.index,
+            games_teams.game_id,
+            games_teams.team_id,
+            games_teams.name,
+            games_teams.winner,
+            games_teams.score,
+            games_teams.game_team_id,
+            games_teams.nth_game,
+            games.match_id AS something_match_id,
+            date_part('year'::text, matches.unix_time) AS winrate_year
+           FROM games
+             JOIN matches ON matches.match_id = games.match_id
+             JOIN games_teams ON games.game_id = games_teams.game_id
+        ), something_else AS (
+         SELECT games.index,
+            games.map_name,
+            games.game_id,
+            games.match_id,
+            games.nth_match,
+            matches.index,
+            matches.unix_time,
+            matches.formatted_date,
+            matches.tournament_link,
+            matches.t1_name,
+            matches.t1_winner,
+            matches.t1_won_n_matches,
+            matches.t2_name,
+            matches.t2_winner,
+            matches.t2_won_n_matches,
+            matches.match_id,
+            games_teams.index,
+            games_teams.game_id,
+            games_teams.team_id,
+            games_teams.name,
+            games_teams.winner,
+            games_teams.score,
+            games_teams.game_team_id,
+            games_teams.nth_game,
+            games.match_id AS something_else_match_id,
+            date_part('year'::text, matches.unix_time) AS winrate_year
+           FROM games
+             JOIN matches ON matches.match_id = games.match_id
+             JOIN games_teams ON games.game_id = games_teams.game_id
+        )
+ SELECT something.team_id,
+    something_else.team_id AS c_team_id,
+    something.winrate_year,
+    something.t1_winner,
+    something.something_match_id
+   FROM something something(index, map_name, game_id, match_id, nth_match, index_1, unix_time, formatted_date, tournament_link, t1_name, t1_winner, t1_won_n_matches, t2_name, t2_winner, t2_won_n_matches, match_id_1, index_2, game_id_1, team_id, name, winner, score, game_team_id, nth_game, something_match_id, winrate_year)
+     JOIN something_else something_else(index, map_name, game_id, match_id, nth_match, index_1, unix_time, formatted_date, tournament_link, t1_name, t1_winner, t1_won_n_matches, t2_name, t2_winner, t2_won_n_matches, match_id_1, index_2, game_id_1, team_id, name, winner, score, game_team_id, nth_game, something_else_match_id, winrate_year) ON something.something_match_id = something_else.something_else_match_id AND something.game_team_id <> something_else.game_team_id;"""

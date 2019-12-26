@@ -36,28 +36,26 @@ class DotaPredictor(CommonPredictor):
 
         from sklearn.svm import SVC
         from sklearn.ensemble import RandomForestClassifier, VotingClassifier
-        from sklearn.tree import DecisionTreeClassifier
-        # lr =  LogisticRegression()
-        # rf = RandomForestClassifier()
-        # svc = SVC()
-        #
-        # model = VotingClassifier(estimators=[("lr", lr), ("rf", rf), ("svc", svc)],voting='soft', probability=True)
-        #
-        from sklearn.ensemble import AdaBoostClassifier
-
-        # model = AdaBoostClassifier(
-        #
-        #     DecisionTreeClassifier(max_depth=1), n_estimators=200,
-        #
-        #     algorithm="SAMME", learning_rate=0.5, random_state=42)
+        from sklearn.model_selection import GridSearchCV
+        params = dict(
+            n_estimators=[50, 100, 200],
+            max_depth=[5, 10, 15],
+            max_leaf_nodes=[None, 5, 10],
+            bootstrap=[True, False],
+            oob_score=[True, False],
+            n_jobs=[100, 150, 200]
+        )
 
         model = RandomForestClassifier(n_estimators=100, max_depth=10,
                                        max_leaf_nodes=10, n_jobs=100)
+        model = RandomForestClassifier()
+        search_model = GridSearchCV(model, params)
 
-        model.fit(self.X_train, self.y_train)
-        self.new_model = model
-        preds = model.predict(self.X_test)
-        print(model.score(self.X_test, self.y_test))
+        search_model.fit(self.X_train, self.y_train)
+        best_model = search_model.best_estimator_
+        self.new_model = best_model
+        preds = best_model.predict(self.X_test)
+        print(best_model.score(self.X_test, self.y_test))
         print("trained new model")
         print(f"roc {roc_auc_score(self.y_test,preds)}")
 
@@ -74,15 +72,6 @@ if __name__ == "__main__":
     DB_URL = f"{DATABASE_URI}dota"
     ENGINE = create_engine(DB_URL)
 
-    # df = pd.read_sql_table("game_stats_reduced_to_matches", con=ENGINE)
-    # df.drop(["year_of_game", "team_id",'League_value',
-    #  'League_link', 'Game Mode', 'Region', 'Duration', 'Match Ended_value',
-    #  'Match Ended_datetime',
-    #         't1_id', 't2_id', 't1_name', 't2_name', 't2_winner', 't1_link',
-    #  't2_link', 'match_link', 'match_id','c_year_of_game', 'c_team_id',
-    #  'game_year',
-    #         "series_link", "min_series_match", "win_pct",
-    #  "t1_winner", "redundant_team_id"], axis=1, inplace=True)
 
     df = pd.read_sql_table("match_stats_all", con=ENGINE)
 

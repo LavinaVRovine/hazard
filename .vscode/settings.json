@@ -1,0 +1,13 @@
+{
+    "python.pythonPath": "C:\\Users\\Darth\\Miniconda3\\envs\\kaltab\\python.exe",
+    "azureFunctions.deploySubpath": "hazard.zip",
+    "azureFunctions.pythonVenv": ".venv",
+    "azureFunctions.projectLanguage": "Python",
+    "azureFunctions.projectRuntime": "~2",
+    "debug.internalConsoleOptions": "neverOpen",
+    "azureFunctions.preDeployTask": "func: pack",
+    "azureFunctions.templateFilter": "Verified",
+    "python.linting.pylintEnabled": false,
+    "python.linting.pep8Enabled": true,
+    "python.linting.enabled": true
+}

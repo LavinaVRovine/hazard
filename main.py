@@ -8,6 +8,7 @@ from config import logging, DATABASE_URI, DB_MAPPINGS, IMPLEMENTED_BOOKIES, DEBU
 from predictions.lol_predictor import LoLPredictor
 from predictions.dota_predictor import DotaPredictor
 from predictions.csgo_predictor import CSGOPredictor
+from csgo_db_loader.get_team_stats import get_csgo_data
 from bookie_monitors.ifortuna_cz import IfortunaCz  # needed, dont remove
 pd.set_option('display.width', 1000)
 pd.set_option('display.max_columns', 50)
@@ -23,7 +24,8 @@ def create_predictor(game):
     elif game == "Dota":
         return DotaPredictor()
     elif game == "CS:GO":
-        return CSGOPredictor()
+
+        return CSGOPredictor(get_csgo_data())
     else:
         logging.critical(f"Not implemented game: {game}")
         raise NotImplementedError
@@ -111,6 +113,8 @@ def compare_odds(**kwargs):
 
 
 if __name__ == '__main__':
-    main("Dota")
+    #main("Dota")
     #exit()
     #compare_odds()
+    #main("CS:GO")
+    compare_odds()

@@ -2,11 +2,12 @@ import pandas as pd
 import numpy as np
 from sklearn.externals import joblib
 from config import ROOT_DIR
+from abc import ABC, abstractmethod
 pd.set_option('display.width', 1000)
 pd.set_option('display.max_columns', 50)
 
 
-class CommonPredictor:
+class CommonPredictor(ABC):
 
     def __init__(self):
         self.scaler = None
@@ -51,7 +52,8 @@ class CommonPredictor:
         wrong = t[t[self.y_col_name] != t["predicted"]]
         extremely_wrong = wrong[(wrong[False] > 0.8) | (wrong[False] < 0.2)]
         return f"got {len(extremely_wrong)} extremely wrong from {len(real)}" \
-               f" which is {len(extremely_wrong)/len(real):.3f}%"
+               f" which is {len(extremely_wrong)/len(real):.3f}%" \
+               f" avg_difference to 0.5 guess is {abs(t.iloc[:, 1] -0.5).mean()}"
 
     def load_saved_model(self):
         return joblib.load(f'{ROOT_DIR}/data/{self.name}.joblib')
@@ -69,11 +71,13 @@ class CommonPredictor:
     def predict_one_match(self, row):
         clf = self.model
         labels = clf.classes_
+        # FIXME dulicate
         row = row[self.training_columns]
 
         probabilities = clf.predict_proba(row)
         return {labels[0]: probabilities[0][0],
                 labels[1]: probabilities[0][1]}
 
+    @abstractmethod
     def train_on_whole(self):
         pass

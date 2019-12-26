@@ -9,7 +9,7 @@ def main():
 
 @click.option('--scrape_game_list','-sgl', default="s8",
               help='Scrapes urls for games, which have been played in season',
-              type=click.Choice(["s5", "s6", "s7", "s8"]),
+              type=click.Choice(["s5", "s6", "s7", "s8", "s9"]),
               multiple=False, show_default=True)
 def get_matches(season):
     print("Scraping season")

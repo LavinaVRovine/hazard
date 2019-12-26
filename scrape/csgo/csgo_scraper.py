@@ -17,6 +17,7 @@ DB_URL = f"{DATABASE_URI}csgo"
 ENGINE = create_engine(DB_URL)
 # TODO map name je s nejakym shit znakem
 
+
 def get_current_scrape_pages():
     return pd.read_sql_table("scrape_urls", con=ENGINE)
 
@@ -24,11 +25,13 @@ def get_current_scrape_pages():
 class Found(Exception):
     pass
 
+
 class Blocked(Exception):
     """Uve been blocked!"""
     pass
 
-def update_csgo_matches():
+
+def get_new_matches_since_last_run():
     """
     Loops until it finds url, which is already scraped.
     Results on page are sorted by date.
@@ -71,7 +74,7 @@ def update_csgo_matches():
 
 
 if __name__ == "__main__":
-    update_csgo_matches()
+    get_new_matches_since_last_run()
 
     conn = psycopg2.connect(DB_URL)
     cursor = conn.cursor()
@@ -141,7 +144,7 @@ if __name__ == "__main__":
                 player_stats["nth_game"] = game_n_in_match
                 player_stats["game_team_id"] = \
                     f"{game.site_game_id}:{team_id}:{game_n_in_match}"
-
+                player_stats = player_stats.rename(columns={"K-D Diff": "K/D Diff"})
                 if players_stats_df is None:
                     players_stats_df = player_stats
                 else:

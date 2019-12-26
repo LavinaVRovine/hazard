@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/Darth/OneDrive/Documents/PythonProjects/hazard/predictions/mlruns/0/b23b1de9b91048f59502fad3832b1c69/artifacts
+end_time: null
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+name: ''
+run_id: b23b1de9b91048f59502fad3832b1c69
+run_uuid: b23b1de9b91048f59502fad3832b1c69
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1576520078788
+status: 1
+tags: []
+user_id: Darth

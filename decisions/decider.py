@@ -25,11 +25,11 @@ class Decider:
         return 1/decimal_ods
 
     def validate_teams(self, main_team, competitor):
-        if len(main_team) == 0:
+        if not main_team:
             print(
                 f"No team {self.team_1_name} in DB")
             raise ValueError
-        elif  len(competitor) == 0:
+        elif not competitor:
             print(
                 f"No team {self.team_2_name} in DB")
             raise ValueError
@@ -70,11 +70,12 @@ class Decider:
                 f"and mine {my_pct_win_change}"
 
     def decide_match_action(self, predictor):
+        match_row = self.create_match_stats_row()
         try:
             match_row = self.create_match_stats_row()
         except ValueError:
             return {"team1": self.team_1_name, "team2": self.team_2_name}
-
+        print()
         try:
             match_row = match_row[predictor.training_columns]
 
