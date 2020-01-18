@@ -1,0 +1,275 @@
+
+;(function (platform) {
+	function __debugInfo (value, suppress) {
+		if (!false) {
+			return;	
+		}
+		
+		if (console && console.log) {
+			console.log('DEBUG: ', value)
+		} else {
+			if (supress !== false) {
+				alert('DEBUG: ' + value); 	
+			}
+		}
+	}
+	
+	
+  var UNSUPPORTED_BROWSER_ID = 'unsupportedBrowserInfo';
+  var CHROME = 'Chrome';
+  var FIREFOX = 'Firefox';
+  var IE = 'IE';
+  var SAFARI = 'Safari';
+  var EDGE = 'Edge';
+  var OPERA = 'Opera';
+
+  var BROWSERS = {
+    'CHROME' : 
+      { support: 64, name: 'Google Chrome' },
+    'FIREFOX' : 
+      { support: 59, name: 'Firefox' },
+    'IE' : 
+      { support: 11, name: 'Internet Explorer' },
+    'SAFARI' : 
+      { support: 9,  name: 'Safari' },
+    'EDGE' : 
+      { support: 12, name: 'Microsoft Edge' },
+    'OPERA' : 
+      { support: 52, name: 'Opera' }
+  };
+
+  var browsersBySystem = {
+    get: function(os) {
+      var osVersion_ = getOsVersion(os);
+      // var osVersion_ = 7;
+
+      if (os.indexOf('Windows') >= 0) {
+        return this.windowsBrowsers(osVersion_) ;
+      }
+
+      return this[os];
+    },
+
+    windowsBrowsers: function (osVersion) {
+      switch (osVersion) {
+        case 10: return this.Windows;
+        case 8:
+        case 8.1:
+        case 7: 
+          return this.WIN_IE_11;
+        default: return this.WIN_NO_IE;
+      }
+    },
+
+    'Mac OS':    [CHROME, SAFARI, FIREFOX, OPERA],
+    'Linux':     [CHROME, FIREFOX, OPERA],
+    'Windows':   [CHROME, FIREFOX, OPERA, EDGE],
+    'WIN_IE_11': [CHROME, FIREFOX, OPERA, IE],
+    'WIN_NO_IE': [CHROME, FIREFOX, OPERA]
+  };
+
+  var browsersDownloadLinks = {
+    get: function (browser, locale, architecture) {
+      var browser_ = browser === IE 
+          ? this.IE[architecture || '32'] 
+          : this[browser];
+
+      var browserLink_ = browser_[locale] ? browser_[locale] : browser_['default'];
+    
+      return browserLink_;
+    },
+
+    'CHROME': {
+      'default': 'https://www.google.com/chrome/',
+      'cs': 'https://www.google.com/intl/cs/chrome/',
+      'sk': 'https://www.google.com/intl/sk/chrome/',
+      'pl': 'https://www.google.com/intl/pl/chrome/'
+    },
+    'FIREFOX': {
+      'default': 'https://www.mozilla.org/en-US/firefox/new/',
+      'cs': 'https://www.mozilla.org/cs/firefox/new/',
+      'sk': 'https://www.mozilla.org/sk/firefox/new/',
+      'pl': 'https://www.mozilla.org/pl/firefox/new/'
+    },
+    'OPERA': {
+      'default': 'https://www.opera.com/download',
+      'cs': 'https://www.opera.com/cs/download',
+      'sk': 'https://www.opera.com/sk/download',
+      'pl': 'https://www.opera.com/pl/download'
+    },
+    'SAFARI': {
+      'default': 'https://support.apple.com/en-us/HT204416',
+      'cs': 'https://support.apple.com/cs-cz/HT204416',
+      'sk': 'https://support.apple.com/cs-cz/HT204416',
+      'pl': 'https://support.apple.com/pl-pl/HT204416'
+    },
+    'EDGE': {
+      'default': 'microsoft-edge:' + window.location.href
+    },
+    'IE': {
+      '32': {
+        'default': 'http://download.microsoft.com/download/9/2/F/92FC119C-3BCD-476C-B425-038A39625558/IE11-Windows6.1-x86-en-us.exe',
+        'cs': 'http://download.microsoft.com/download/7/3/B/73B5E55F-FF1A-45E2-932F-B11A4A5D0B53/IE11-Windows6.1-x86-cs-cz.exe',
+        'sk': 'http://download.microsoft.com/download/3/6/D/36DFE869-2C9E-4AC3-8E9D-008F0CD7BF37/IE11-Windows6.1-x86-sk-sk.exe',
+        'pl': 'http://download.microsoft.com/download/3/B/9/3B99705D-F1A0-47F5-BC64-6939B7128F6A/IE11-Windows6.1-x86-pl-pl.exe'
+      },
+      '64': {
+        'default': 'http://download.microsoft.com/download/7/1/7/7179A150-F2D2-4502-9D70-4B59EA148EAA/IE11-Windows6.1-x64-en-us.exe',
+        'cs': 'http://download.microsoft.com/download/E/C/2/EC2CFD8B-70BF-496A-AD16-B1CA59A0FBD8/IE11-Windows6.1-x64-cs-cz.exe',
+        'sk': 'http://download.microsoft.com/download/D/D/2/DD2B00C4-22DE-4385-8628-E1E34A8BD4E8/IE11-Windows6.1-x64-sk-sk.exe',
+        'pl': 'http://download.microsoft.com/download/E/F/B/EFBF6FDC-AE5D-404D-B5A3-A695CA831072/IE11-Windows6.1-x64-pl-pl.exe'
+      }
+    }
+  };
+
+  function getOsVersion (osString) {
+    return Number(osString.replace(/[^0-9\.]+/g,""));
+  }
+
+  function composeBrowsersList (os, locale) {
+    var holder_   = document.getElementById('supportedBrowsersList');
+    if (!holder_) {
+      return;
+    }
+
+    var browsers  = browsersBySystem.get(os);
+    var fragment_ = document.createDocumentFragment('ul');
+    var i = 0;
+    var versions_ = {};
+
+    for (i; i < browsers.length; i++) {
+      var browserId_ = browsers[i].toUpperCase();
+      var downlaodLink_ = browsersDownloadLinks.get(browserId_, locale);
+      var li_ = document.createElement('li');
+      var a_  = document.createElement('a');
+
+      a_.innerHTML = BROWSERS[browserId_].name;
+
+      a_.className = browserId_;
+      a_.id = browserId_;
+      a_.setAttribute('target', '_blank');
+      a_.href = downlaodLink_;
+      
+      li_.appendChild(a_);
+
+      fragment_.appendChild(li_);
+    }
+
+    holder_.innerHTML = '';
+    holder_.appendChild(fragment_);
+
+    if (window.sendXhrRequest) {
+      try {
+        var url = 'https://last-browser-version.herokuapp.com/';
+				__debugInfo('tryin to send')
+        window.sendXhrRequest(url, function(res) {
+
+          for(b in BROWSERS) {
+            var browserElm_ = document.getElementById(b);
+            var version_ = res.versions[b.toLowerCase()];
+
+            if (browserElm_ && version_) {
+              BROWSERS[b].version = version_;
+              browserElm_.innerHTML += ' ' + version_;
+            }
+          }
+        });
+      } catch (e) {
+        console.log(e);
+      }
+    }
+  }  
+
+  function unsupportedBrowserInfo (browser, version) {
+    var holder_ = document.getElementById(UNSUPPORTED_BROWSER_ID);
+    var browser_ = document.getElementById(UNSUPPORTED_BROWSER_ID + '__browser');
+    var version_ = document.getElementById(UNSUPPORTED_BROWSER_ID + '__version');
+    var toggler_ = document.getElementById(UNSUPPORTED_BROWSER_ID + '__toggle');
+
+    browser_.innerHTML = BROWSERS[browser].name;
+    version_.innerHTML = version;
+
+    if (toggler_.addEventListener) {
+      toggler_ && toggler_.addEventListener('click', function(e) {
+        toggleUnsupportedBrowserInfo(e, holder_)
+      });
+    } else {
+      toggler_.attachEvent('onclick', function() {
+        toggleUnsupportedBrowserInfo(toggler_, holder_);
+      });
+    }
+
+      
+
+
+    holder_.style.display = 'block';
+  }
+
+  function toggleUnsupportedBrowserInfo (e, holder) {
+    if (!holder) {
+      return;
+    }
+
+    var toggler_ = e.target || e;
+    var label_ = toggler_.getAttribute('data-label');
+    var status_ = toggler_.getAttribute('data-toggled');
+    var info_ = document.getElementById(holder.id + '--wrapper');
+
+    // store current label
+    toggler_.__tmpLabel = toggler_.innerText;
+    toggler_.innerText = label_;
+    toggler_.setAttribute('data-label', toggler_.__tmpLabel);
+
+    if (status_) {
+      info_.style.display = 'block';
+      toggler_.removeAttribute('data-toggled')
+      document.cookie="browser-disclaimer=0";
+    } else {
+      info_.style.display = 'none';
+      toggler_.setAttribute('data-toggled', 'true');
+      document.cookie="browser-disclaimer=1";
+    }
+  }
+
+  function removeUnsupportedInfo () {
+    var holder_ = document.getElementById(UNSUPPORTED_BROWSER_ID);
+    holder_.parentNode.removeChild(holder_);
+
+  }
+
+  window.isBrowserSupported = function (locale, browsers) {
+    var browsersToCheck_ = browsers || BROWSERS;
+    
+    if (!window.browser || !window.browser.detect) {
+      return null;
+    }
+
+    var platform_ = window.browser.detect();
+    var os_       = platform_.os;
+    var browser_  = platform_.name.toUpperCase();
+    var version_  = parseInt(platform_.version, 10);
+    
+    if (!browsersToCheck_[browser_] || !browsersToCheck_[browser_].support) {
+      return;
+    }
+
+    var isSupported_ = version_ >= browsersToCheck_[browser_].support;
+
+    if (!isSupported_) {
+      unsupportedBrowserInfo(browser_, version_);
+      __debugInfo('OS: ' + os_, true);
+      __debugInfo('Browser: ' + browser_, true);
+      __debugInfo('Version: ' + version_, true);
+      __debugInfo('Is supported: ' + isSupported_, true);
+    } else {
+      removeUnsupportedInfo();
+    }
+
+    composeBrowsersList(os_, locale);
+
+    return {
+      supported: isSupported_,
+      browsersBySystem: browsersBySystem.get(os_)
+    };
+  };
+})();

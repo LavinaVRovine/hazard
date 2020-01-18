@@ -104,3 +104,8 @@ def join_with_old(data):
     )
     lol_df = lol_df.fillna(0)
     return lol_df
+
+
+if __name__ == '__main__':
+    x = handle_the_old_way()
+    print()

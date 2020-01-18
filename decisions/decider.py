@@ -1,7 +1,7 @@
 import traceback
 import pandas as pd
 from sqlalchemy import create_engine
-
+from typing import Union, Optional
 pd.set_option("display.width", 1000)
 pd.set_option("display.max_columns", 50)
 
@@ -14,8 +14,8 @@ class Decider:
 
     def __init__(self, match_row, db_location):
         self.engine = create_engine(db_location, echo=False)
-        self.team_1_name = match_row["team1"]
-        self.team_2_name = match_row["team2"]
+        self.team_1_name = match_row["team1"].strip().lower()
+        self.team_2_name = match_row["team2"].strip().lower()
         self.team_1_rate = match_row["team_1_rate"]
         self.team_2_rate = match_row["team_2_rate"]
 
@@ -23,20 +23,25 @@ class Decider:
     def calc_ods_percent(decimal_ods):
         return 1 / decimal_ods
 
-    def validate_teams(self, main_team, competitor):
-        if not main_team:
-            print(f"No team {self.team_1_name} in DB")
-            raise ValueError
-        elif not competitor:
-            print(f"No team {self.team_2_name} in DB")
+    def validate_teams(self, main_team: Optional[Union[pd.DataFrame, pd.Series]], competitor: Optional[Union[pd.DataFrame, pd.Series]]):
+        try:
+            if main_team is None or len(main_team) == 0:
+                print(f"No team {self.team_1_name} in DB")
+                raise ValueError
+            elif competitor is None or len(competitor) == 0:
+                print(f"No team {self.team_2_name} in DB")
+                raise ValueError
+        except:
             raise ValueError
         return True
 
     def create_match_stats_row(self):
         main_team = self.lookup_team_stats(self.team_1_name)
         competitor = self.lookup_team_stats(self.team_2_name)
-        self.validate_teams(main_team, competitor)
-
+        try:
+            self.validate_teams(main_team, competitor)
+        except ValueError:
+            return
         competitor = competitor.add_prefix("c_")
         if type(competitor) == pd.Series or type(main_team) == pd.Series:
             whole_row = pd.concat([main_team, competitor])
@@ -71,7 +76,7 @@ class Decider:
             )
 
     def decide_match_action(self, predictor):
-        match_row = self.create_match_stats_row()
+        #match_row = self.create_match_stats_row()
         try:
             match_row = self.create_match_stats_row()
         except ValueError:

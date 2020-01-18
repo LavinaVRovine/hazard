@@ -8,7 +8,7 @@ from config import logging, DATABASE_URI, DB_MAPPINGS, IMPLEMENTED_BOOKIES, DEBU
 from predictions.lol_predictor import LoLPredictor
 from predictions.dota_predictor import DotaPredictor
 from predictions.csgo_predictor import CSGOPredictor
-from csgo_db_loader.get_csgo_data import get_csgo_data
+from data.get_csgo_data import get_csgo_data
 from bookie_monitors.ifortuna_cz import IfortunaCz  # needed, dont remove
 
 pd.set_option("display.width", 1000)
@@ -25,20 +25,19 @@ def create_predictor(game):
     elif game == "Dota":
         return DotaPredictor()
     elif game == "CS:GO":
-
         return CSGOPredictor(get_csgo_data())
     else:
         logging.critical(f"Not implemented game: {game}")
         raise NotImplementedError
 
 
-def create_decider(game, row, db_location):
+def create_decider(game, bookie_match_row, db_location):
     if game == "LoL":
-        return LoLDecider(row, db_location)
+        return LoLDecider(bookie_match_row, db_location)
     elif game == "Dota":
-        return DotaDecider(row, db_location)
+        return DotaDecider(bookie_match_row, db_location)
     elif game == "CS:GO":
-        return CSGODecider(row, db_location)
+        return CSGODecider(bookie_match_row, db_location)
     else:
         raise NotImplementedError
 

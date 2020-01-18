@@ -12,25 +12,7 @@ class IfortunaCz(Monitor):
         super().__init__(*args, **kwargs)
         self._interesting_bet_options = ["zápas"]
 
-    @staticmethod
-    def parse_data_from_doc(ajax_doc):
-        return pd.read_html(ajax_doc.replace("\n", ""))
-
-    def get_stats_doc(self, ajax_url):
-        # sometimes get fails
-        for _ in range(0, 5):
-            ajax_doc = super().get_response(ajax_url).text
-            if "sázka na výsledek zápas" in ajax_doc or "betTable" in ajax_doc:
-                return ajax_doc
-            else:
-                wait_time = random.randint(20, 60)
-                time.sleep(wait_time)
-                print(
-                    f"Waiting {wait_time} because ajax "
-                    f"doc seems corrupted: {ajax_doc}"
-                )
-        return False
-
+    # FIXME. uses old website layout
     def use_saved_file(self):
         print(f"Using saved file for {self.web_name}")
         file = open(f"{ROOT_DIR}/data/IfortunaCz.html", encoding="utf-8")
@@ -43,36 +25,36 @@ class IfortunaCz(Monitor):
 
     def get_parse_page(self):
         response = super().get_response(self.gaming_page)
-        return BeautifulSoup(response.content, "html.parser")
+        return BeautifulSoup(response.content, "html5lib")# "html.parser")
 
     @staticmethod
-    def is_invalid_tournament(t_title):
+    def is_invalid_tournament(t_title: str):
         return (
-            "ukončení podpory starých" in t_title.text
-            or "Živá hra online" in t_title.text
+            "ukončení podpory starých" in t_title
+            or "Živá hra online" in t_title
+            or "celkový vítěz" in t_title
+            or "celkovy" in t_title
+            or "elkový ví" in t_title
         )
 
     def process_tournament_table(self, table):
-        tournament_title = table.find("h3")
-        if self.is_invalid_tournament(tournament_title):
+        tournament_title = table.find("h2").text
+        if self.is_invalid_tournament(tournament_title) or not self.is_game_tournament(tournament_title):
             return
 
-        ajax_url = self.find_ajax_stats_url(table, tournament_title)
-        if ajax_url is None:
-            return
-        ajax_doc = self.get_stats_doc(ajax_url)
-        if ajax_doc is False:
-            print(f"Something wen wrong with for {ajax_url}")
-            return
+        try:
 
-        # zápasy only
-        match_stats = self.parse_data_from_doc(ajax_doc)[0]
+            match_stats = pd.read_html(table.find("table").prettify())[0]
+        except:
+            import traceback
+            traceback.print_exc()
+            return
         formatted = self.format_bookie_data(match_stats)
         return formatted
 
     def get_bookie_info(self):
         soup = self.get_parse_page()
-        for table in soup.find_all("div", {"class": "gradient_table"}):
+        for table in soup.find_all("section", {"class": "competition-box"}):
             formatted = self.process_tournament_table(table=table)
             if formatted is None:
                 continue
@@ -81,63 +63,12 @@ class IfortunaCz(Monitor):
             print("succesfully updated stats")
         return True
 
-    def is_game_tournament(self, title):
+    def is_game_tournament(self, title: str):
         """Kinda stupidly made...if searching for dota, consider only dota"""
-        return " | " + self.game_name in title.text
-
-    def search_for_filter_link(self, table_div):
-        # magic IDs of tournaments
-        url_filters = []
-        tournament_link = None
-        for span in table_div.find_all("span", {"class": "checkbox"}):
-            bet_type_title = span.find("input").get("title")
-            # not interested in pocet map and so on
-            if self.is_relevant_bid_type(bet_type_title):
-                value = span.find("input").get("value")
-                url_filters.append(value)
-                parent = span.parent
-                assert parent.name == "span"
-                tournament_link = parent.find("a").get("href")
-        # nevim zda se že to předělali? važně nevim
-        if tournament_link is None:
-            th = table_div.find("th")
-            tournament_link = th.find("a").get("href")
-
-            rrr = re.compile("itemTypeId=(\d+)")
-            neco_id = rrr.findall(tournament_link)
-            if neco_id == []:
-                return tournament_link, []
-            url_filters = [neco_id[0]]
-
-        return tournament_link, url_filters
-
-    def find_ajax_stats_url(self, table_div, title):
-        if not self.is_game_tournament(title):
-            return
-        # elif "celkov" not in title.text:
-        #   return
-        if (
-            "celkový vítěz" in title.text
-            or "celkovy" in title.text
-            or "elkový ví" in title.text
-        ):
-            return
-        link, url_values = self.search_for_filter_link(table_div)
-        ajax_url = (
-            self.gaming_page
-            + self.parse_tournament_name(link)
-            + "?action=filter_by_subgame&itemTypeId="
-            + ";".join(url_values)
-            + ";&_ajax=1"
-        )
-        return ajax_url
+        return self.game_name.lower() in title.lower()
 
     def is_relevant_bid_type(self, bet_type_title):
         return bet_type_title in self._interesting_bet_options
-
-    @staticmethod
-    def parse_tournament_name(tournament_link):
-        return tournament_link[tournament_link.rfind("/") : tournament_link.rfind("?")]
 
     @staticmethod
     def is_special_table(table):
@@ -152,9 +83,13 @@ class IfortunaCz(Monitor):
         if self.is_special_table(df):
             print("who cares")
             return {"table_name": df.columns[0], "result": df}
-        df[["game_title", "game_id"]] = df.iloc[:, 0].str.rsplit(" ", 1, expand=True)
-        df[["team1", "team2"]] = super().split_match_to_teams(df["game_title"])
-        df.rename({"1": "team_1_rate", "2": "team_2_rate"}, axis=1, inplace=True)
+        try:
+            df[["game_title", "game_id"]] = df.iloc[:, 0].str.rsplit(" ", 1, expand=True)
+            df[["team1", "team2"]] = super().split_match_to_teams(df["game_title"])
+            df.rename({"1": "team_1_rate", "2": "team_2_rate"}, axis=1, inplace=True)
+        except ValueError:
+            # most likely velkovy vitez
+            return
         return df
 
 
@@ -165,7 +100,7 @@ if __name__ == "__main__":
         "ifortuna",
         game_name="CS:GO",
         logger=logging,
-        game_url="https://www.ifortuna.cz/cz/sazeni/progaming",
+        game_url="https://www.ifortuna.cz/sazeni/e-sporty",
     )
     c.get_bookie_info()
     print()

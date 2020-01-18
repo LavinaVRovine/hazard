@@ -1,6 +1,6 @@
 import pandas as pd
 from decisions.decider import Decider
-from csgo_db_loader.get_csgo_data import get_csgo_data
+from data.get_csgo_data import get_csgo_data
 import traceback
 
 
@@ -9,7 +9,9 @@ class CSGODecider(Decider):
         super().__init__(match_row, db_location)
         self.df = get_csgo_data()
 
-    def clear_name(self, team_name):
+
+    @staticmethod
+    def clear_name(team_name):
         team_name = team_name.replace("Team", "")
         team_name = team_name.replace("Clan", "")
         team_name = team_name.replace("Gaming", "")

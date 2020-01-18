@@ -1,13 +1,17 @@
 import pandas as pd
 from sqlalchemy import create_engine
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.ensemble import RandomForestClassifier
 from predictions.common_predictor import CommonPredictor
 from config import DATABASE_URI
-from mlflow import log_metric, log_param, log_artifact
-from csgo_db_loader.get_csgo_data import get_csgo_data
+from data.get_csgo_data import get_csgo_data
 import mlflow
+from sklearn.ensemble import (
+        RandomForestClassifier,
+        GradientBoostingClassifier,
+    )
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.metrics import log_loss, make_scorer
+from sklearn.metrics import roc_auc_score
 
 pd.set_option("display.width", 1000)
 pd.set_option("display.max_columns", 50)
@@ -47,14 +51,7 @@ class CSGOPredictor(CommonPredictor):
 
 
 if __name__ == "__main__":
-    from sklearn.svm import SVC
-    from sklearn.ensemble import (
-        RandomForestClassifier,
-        VotingClassifier,
-        GradientBoostingClassifier,
-    )
-    from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
-    from sklearn.metrics import log_loss, make_scorer
+
 
     scorer = make_scorer(log_loss, greater_is_better=False, needs_proba=True)
     params = dict(
@@ -80,7 +77,7 @@ if __name__ == "__main__":
 
         m = pred.new_model.best_estimator_
         pred.check_differences(m)
-        from sklearn.metrics import roc_auc_score
+
 
         preds = m.predict(pred.X_test)
         print(m.score(pred.X_test, pred.y_test))

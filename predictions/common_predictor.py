@@ -10,32 +10,17 @@ pd.set_option("display.max_columns", 50)
 
 class CommonPredictor(ABC):
     def __init__(self):
-        self.scaler = None
         self.name = type(self).__name__
-        try:
-            self.model = self.load_saved_model()
-        except:
-            pass
-        self.new_model = None
+
+        self.model = None
+        self.model = self.load_saved_model()
         self.X_train, self.X_test, self.y_train, self.y_test = (None, None, None, None)
         self.training_columns = []
         self.y_col_name = ""
 
-    def compare_models(self):
-
-        self.check_differences(self.model)
-
-        print(
-            f"Old model stats {self.check_differences(self.model)} "
-            f"and score {self.model.score(self.X_test, self.y_test):.2f}%"
-        )
-        print(
-            f"New model stats {self.check_differences(self.new_model)} "
-            f"and score {self.new_model.score(self.X_test, self.y_test):.2f}%"
-        )
 
     def eval_predict_proba(self):
-        predicted = self.new_model.predict_proba(self.X_test)
+        predicted = self.model.predict_proba(self.X_test)
         tr = predicted[:, 0]
         return f"avg distance from random {abs(tr - 0.5).mean()}"
 
@@ -57,7 +42,7 @@ class CommonPredictor(ABC):
         )
 
     def load_saved_model(self):
-        return joblib.load(f"{ROOT_DIR}/data/{self.name}.joblib")
+        return joblib.load(f"{ROOT_DIR}/saved_models/{self.name}.joblib")
 
     def save_model(self, classifier):
 
@@ -65,20 +50,22 @@ class CommonPredictor(ABC):
             input("U are going to rewrite model. Are you sure?" " Spec 'yes' if so")
             == "yes"
         ):
-            joblib.dump(classifier, f"{ROOT_DIR}/data/{self.name}.joblib")
+            joblib.dump(classifier, f"{ROOT_DIR}/saved_models/{self.name}.joblib")
             return True
         else:
             print("New model not set")
             return False
 
     def predict_one_match(self, row):
-        clf = self.model
+        clf = self.model if type(self.model) is not dict else self.model["model"]
         labels = clf.classes_
+        win_chance = labels[0]
+        lose_chance = labels[1]
         # FIXME dulicate
         row = row[self.training_columns]
 
         probabilities = clf.predict_proba(row)
-        return {labels[0]: probabilities[0][0], labels[1]: probabilities[0][1]}
+        return {win_chance: probabilities[0][0], lose_chance: probabilities[0][1]}
 
     @abstractmethod
     def train_on_whole(self):

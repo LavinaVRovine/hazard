@@ -1,0 +1,2 @@
+
+var FORTUNA={_run:[],_load:[],_paths:{},components:[],run:function(fn,onload){var queue=onload?FORTUNA._load:FORTUNA._run;if(fn){if(queue&&typeof queue.push==="function"){queue.push(fn);}else{fn();}}},localization:{close:"Zavřít","reset-combi-values":"Vymazat hodnoty vkladu maxikombiku?"}};

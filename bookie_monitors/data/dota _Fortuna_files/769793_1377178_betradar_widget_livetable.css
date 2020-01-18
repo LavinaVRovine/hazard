@@ -1,0 +1,404 @@
+.wc-widget{
+  height: 100%;
+  width: 100%;
+}
+.wc-widget * {
+  box-sizing: border-box;
+}
+.sr-widget .sr-widget-title{
+  color: #56585d;
+}
+.sr-widget .sr-header{
+  background-color: rgba(86, 88, 93, 0.5);
+}
+.sr-widget .sr-subheader-1{
+  background-color: rgba(86, 88, 93, 0.5);
+}
+.sr-widget .sr-subheader-1.sr-pills-carousel, .sr-widget .sr-subheader-1.sr-toggle{
+  background-color: #56585d;
+}
+.sr-widget .sr-header-1{
+  background-color: #56585d;
+  color: #ffffff;
+}
+.sr-widget .sr-header-2{
+  background-color: #56585d;
+  color: #ffffff;
+}
+.sr-widget .sr-header-3{
+  background-color: rgba(86, 88, 93, 0.5);
+  color: #ffffff;
+}
+.sr-widget .sr-header-4{
+  background-color: rgba(86, 88, 93, 0.3);
+  color: #ffffff;
+}
+.sr-widget .sr-header-6{
+  color: #404246;
+}
+.sr-widget .sr-section-1{
+  background-color: #56585d;
+}
+.sr-widget .sr-section-2{
+  background-color: #56585d;
+}
+.sr-widget .sr-live-badge .sr-icon-live{
+  color: #404246;
+}
+.sr-widget .sr-tabs .sr-tabs-header:after{
+  background-color: #56585d;
+}
+.sr-widget .sr-tabs .sr-tab{
+  color: #ffffff;
+  background-color: rgba(86, 88, 93, 0.6);
+}
+.sr-widget .sr-tabs .sr-tab.sr-active{
+  background-color: #56585d;
+}
+.sr-widget .sr-tabs .sr-tab.sr-tab-disabled:hover{
+  background-color: rgba(86, 88, 93, 0.6);
+}
+.sr-widget .sr-tabs .sr-tab:hover{
+  background-color: #56585d;
+}
+.sr-widget .sr-container-tabs .sr-container-tab.sr-active{
+  background-color: #56585d;
+}
+.sr-widget .sr-pills .sr-pill.sr-active{
+  color: #ffffff;
+  background-color: #56585d;
+  border-left-color: transparent;
+}
+.sr-widget .sr-pills .sr-pill.sr-active:hover{
+  background-color: #56585d;
+}
+.sr-widget .sr-pills.sr-pills-carousel .sr-pill.sr-day:hover, .sr-widget .sr-pills.sr-pills-carousel .sr-pill.sr-round:hover, .sr-widget .sr-pills.sr-pills-carousel .sr-pill.sr-active.sr-day:hover, .sr-widget .sr-pills.sr-pills-carousel .sr-pill.sr-active.sr-round:hover{
+  color: #404246;
+}
+.sr-widget .sr-pills.sr-pills-carousel .sr-pill.sr-day.sr-active, .sr-widget .sr-pills.sr-pills-carousel .sr-pill.sr-round.sr-active{
+  color: #404246;
+}
+.sr-widget .sr-selected{
+  background: linear-gradient(to right, rgba(86, 88, 93, 0.5), transparent);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.sr-widget[dir="rtl"] .sr-selected{
+  background: linear-gradient(to left, rgba(86, 88, 93, 0.5), transparent);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.sr-widget .sr-highlight{
+  background: linear-gradient(to right, rgba(86, 88, 93, 0.3), transparent);
+}
+.sr-widget[dir="rtl"] .sr-highlight{
+  background: linear-gradient(to left, rgba(86, 88, 93, 0.3), transparent);
+}
+.sr-widget .sr-highlight-solid{
+  background-color: #56585d;
+}
+.sr-widget .sr-highlight-solid-trans{
+  background-color: rgba(86, 88, 93, 0.3);
+}
+.sr-widget .sr-team-header-home{
+  background-color: rgba(86, 88, 93, 0.5);
+  color: #ffffff;
+}
+.sr-widget .sr-team-header-away{
+  background-color: rgba(86, 88, 93, 0.5);
+  color: #ffffff;
+}
+.sr-widget .sr-color-home{
+  background-color: #404246;
+}
+.sr-widget .sr-border-color-home{
+  border-color: #404246;
+}
+.sr-widget .sr-fill-home{
+  fill: #404246;
+}
+.sr-widget .sr-matclineups-pitch .sr-player-home, .sr-widget .sr-lmts-tactical-home .sr-shirt, .sr-widget .sr-widgets-lmts-playerinfo .sr-home, .sr-widget .sr-lmts-lineups-player .sr-home{
+  background-color: #404246;
+  color: #000000;
+}
+.sr-widget .sr-matclineups-teams .sr-tabs-header.sr-home:after{
+  background-color: #404246;
+}
+.sr-widget .sr-matclineups-teams .sr-tab .sr-lineups-header-home{
+  background-color: rgba(64, 66, 70, 0.75);
+  color: #000000;
+}
+.sr-widget .sr-matclineups-teams .sr-tab.sr-active:first-child{
+  background-color: #404246;
+}
+.sr-widget .sr-matclineups-teams .sr-tab.sr-active .sr-lineups-header-home{
+  background-color: #404246;
+}
+.sr-widget .sr-matclineups-teams .sr-matchlineups-home .sr-matchlineups-shirtnumber{
+  background-color: #404246;
+  color: #000000;
+}
+.sr-widget.sr-large .sr-matclineups-teams .sr-tab .sr-lineups-header-home{
+  background-color: rgba(86, 88, 93, 0.5);
+  color: #ffffff;
+}
+.sr-widget.sr-large .sr-matclineups-teams .sr-tab .sr-lineups-header-away{
+  background-color: rgba(86, 88, 93, 0.5);
+  color: #ffffff;
+}
+.sr-widget .sr-cuproster-match-date{
+  background-color: rgba(86, 88, 93, 0.3);
+}
+.sr-widget .sr-odd-outcome{
+  color: #ffffff;
+  background-color: rgba(86, 88, 93, 0.5);
+}
+.sr-widget .sr-odd-outcome:hover{
+  background-color: #56585d;
+}
+.sr-widget .sr-form-home .sr-form-inner{
+  background-color: #404246;
+}
+.sr-widget .sr-last-next-home:before{
+  background-color: #404246;
+}
+.sr-widget .sr-dropdown-overlay:before{
+  background-color: #56585d;
+}
+.sr-widget .sr-item-last{
+  border-color: #56585d;
+}
+.sr-widget .sr-group-name.sr-active{
+  background-color: #56585d;
+}
+.sr-widget .sr-group-name:hover{
+  background-color: rgba(86, 88, 93, 0.6);
+}
+.sr-widget .sr-comment-share .sr-icon:hover{
+  color: #56585d;
+}
+.sr-widget .sr-comment-item .sr-score-change{
+  color: #404246;
+}
+.sr-widget .sr-datepicker-calendar-table .sr-day.sr-active{
+  background-color: #56585d;
+}
+.sr-widget .sr-datepicker-calendar-table .sr-day.sr-today{
+  border: 1px solid #56585d;
+}
+.sr-widget .sr-toggle-datepicker-calendar:hover .sr-icon.sr-icon-calendar, .sr-widget .sr-toggle-datepicker-calendar.sr-active .sr-icon.sr-icon-calendar{
+  color: #404246;
+}
+.sr-widget .sr-toggle-live:hover .sr-icon.sr-icon-live, .sr-widget .sr-toggle-live.sr-active .sr-icon.sr-icon-live{
+  color: #404246;
+}
+.sr-widget .sr-toggle-odds.sr-active:hover .sr-switcher-toggle, .sr-widget .sr-toggle-odds.sr-active .sr-switcher-toggle{
+  background: #404246;
+}
+.sr-widget .sr-toggle-odds.sr-active .sr-toggle-odds-text{
+  color: #404246;
+}
+.sr-widget .sr-live-colorBox{
+  background: #404246;
+  color: #000000;
+}
+.sr-widget .sr-embedded .sr-matchheader-soccer .sr-live-wrapper{
+  background: #404246;
+  color: #000000;
+}
+.sr-widget.sr-widgets-playerinfo.sr-medium .sr-tabs .sr-tab, .sr-widget.sr-widgets-playerinfo.sr-large .sr-tabs .sr-tab{
+  background-color: #56585d;
+}
+.sr-widget .sr-lmts-heatmap-tab:hover .sr-nav-icon:before, .sr-widget .sr-lmts-heatmap-tab:hover .sr-nav-title{
+  color: #56585d;
+}
+.sr-widget .sr-lmts-heatmap-tab-selected .sr-nav-icon:before, .sr-widget .sr-lmts-heatmap-tab-selected .sr-nav-title{
+  color: #56585d;
+}
+.sr-widget .sr-lmts-lineups-tab:hover, .sr-widget .sr-lmts-lineups-tab.sr-tab-selected{
+  color: #56585d;
+}
+.sr-widget .sr-lmts-lineups-tab.sr-tab-selected .sr-nav-title{
+  border-color: #56585d;
+}
+.sr-widget .sr-lmts-pitch-branding{
+  background: #56585d;
+}
+.sr-widget .sr-lmts.sr-lmts-pitch-crowd .sr-scoreboard-head{
+  background-color: #56585d;
+}
+.sr-widget .sr-lmts .sr-events .sr-generic-ticker[data-team="home"] .sr-ticker-side{
+  background-color: #404246;
+}
+.sr-widget .sr-lmts [data-team="home"] .sr-lmts-icon-man{
+  color: #404246;
+  text-shadow: -1px 0 #fff, 0 1px #fff, 1px 0 #fff, 0 -1px #fff;
+}
+.sr-widget .sr-lmts [data-team="home"] .sr-position-circle-inner{
+  border-color: #404246;
+  box-shadow: 0 0 3px 1px #404246, 0 0 3px 1px #404246 inset;
+}
+.sr-widget .sr-lmts .sr-ball-behind[data-team="home"]{
+  box-shadow: 20px 0 5px 0 rgba(64, 66, 70, 0.5);
+}
+.sr-widget .sr-lmts .sr-lmts-positioned-event-spot[data-team="home"] .sr-circle, .sr-widget .sr-lmts .sr-lmts-positioned-event-spot[data-team="home"] .sr-spot, .sr-widget .sr-lmts .sr-lmts-positioned-event-spot[data-team="home"] .sr-time{
+  background-color: #404246;
+}
+.sr-widget .sr-lmts .sr-widgets-betstimulation{
+  background: #333437;
+  color: #ffffff;
+}
+.sr-widget.sr-widgets-matchcommentary .sr-event-content .sc-event-full, .sr-widget.sr-widgets-matchcommentary .sr-comment-tennis.sr-tennis-set-won{
+  background-color: rgba(86, 88, 93, 0.2);
+}
+.sr-widget.sr-widgets-oddscomparison .sr-oddscomparison-selectors .sr-button, .sr-widget.sr-widgets-oddscomparison .sr-oddscomparison-selectors .sr-dropdown-indicator, .sr-widget.sr-widgets-oddscomparison .sr-oddscomparison-selectors .sr-button-home{
+  background-color: rgba(86, 88, 93, 0.5);
+}
+.sr-widget.sr-widgets-oddscomparison .sr-oddscomparison-selectors .sr-button.sr-button-active, .sr-widget.sr-widgets-oddscomparison .sr-oddscomparison-selectors .sr-button:hover{
+  background-color: #56585d;
+}
+.sr-widget.sr-widgets-oddscomparison-oddsupcomingmatches .sr-odd-outcome:hover{
+  background-color: rgba(86, 88, 93, 0.5);
+}
+.sr-widget.sr-widgets-oddscomparison-oddstournaments .sr-title-outrights{
+  color: #56585d;
+}
+.sr-widget.sr-widgets-oddscomparison-oddsmatchdetails .sr-row-average .sr-odds-data-wrapper{
+  background-color: rgba(86, 88, 93, 0.5);
+}
+.sr-widget.sr-widgets-oddscomparison-oddsmatchdetails .sr-row-highest .sr-odds-data-wrapper{
+  background-color: rgba(86, 88, 93, 0.3);
+  color: #ffffff;
+}
+.sr-widget.sr-widgets-oddscomparison-oddsmatchdetails .sr-odds-bookmakers .sr-row-average{
+  background-color: rgba(86, 88, 93, 0.5);
+}
+.sr-widget.sr-widgets-oddscomparison-oddsmatchdetails .sr-odds-bookmakers .sr-row-highest{
+  background-color: rgba(86, 88, 93, 0.3);
+}
+.sr-widget.sr-widgets-oddscomparison-oddsmatchdetails .sr-oddsdropdown-header, .sr-widget.sr-widgets-oddscomparison-oddsmatchdetails .sr-odds-legend, .sr-widget.sr-widgets-oddscomparison-oddsmatchdetails .sr-exchange-title{
+  background-color: rgba(86, 88, 93, 0.3);
+}
+.sr-widget.sr-widgets-oddscomparison-oddsmatchlist .sr-iconOdds-statistics:hover{
+  color: #56585d;
+}
+.sr-widget.sr-widgets-oddscomparison-oddsoutrights .sr-average{
+  color: #404246;
+}
+.sr-widget.sr-widgets-oddscomparison-oddsoutrights .sr-odds-header-right{
+  background-color: rgba(86, 88, 93, 0.3);
+  border-right: 2px solid transparent;
+  border-bottom: 2px solid transparent;
+}
+.sr-widget.sr-widgets-momentum2 .sr-fill-home{
+  fill: #404246;
+}
+.sr-widget.sr-widgets-momentum2 .sr-stroke-home{
+  stroke: #404246;
+}
+.sr-widget.sr-widgets-betstimulation .sr-text-highlight{
+  color: #404246;
+}
+.sr-widget.sr-widgets-betstimulation .sr-hotspot-transparent{
+  background-color: #47484a;
+}
+.sr-widget.sr-widgets-probabilities-winprobability .sr-bar-home{
+  background: #404246;
+}
+.sr-widget.sr-widgets-probabilities-averagegoals .sr-team-home{
+  background: #404246;
+}
+.sr-widget.sr-widgets-probabilities-ballpossession .sr-barchart-container .sr-bar-home{
+  background: #404246;
+}
+.sr-widget.sr-widgets-probabilities-ballpossession .sr-chart-pie .sr-pie-slice-num-1{
+  fill: #404246;
+}
+.sr-widget.sr-widgets-probabilities-scoringprobability .sr-chart-polar .sr-polar-bar1-slice{
+  fill: #404246;
+}
+.sr-widget.sr-widgets-probabilities-scoringprobability .sr-chart-polar .sr-polar-bar1-arc{
+  stroke: #404246;
+}
+.sr-widget.sr-widgets-probabilities-correctscore .sr-barchart-container .sr-home{
+  background: #404246;
+}
+.sr-widget.sr-widgets-probabilities-correctscore .sr-home{
+  color: #404246;
+}
+.sr-widget.sr-widgets-probabilities-correctscore .sr-spot.sr-hotspot-home{
+  background: rgba(64, 66, 70, 0.5);
+}
+.sr-widget.sr-widgets-probabilities-correctscore .sr-spot.sr-hotspot-home.sr-spot-border{
+  border-color: #404246;
+}
+.sr-widget.sr-widgets-probabilities-correctscore .sr-chart-heatmapmatrix .sr-net-wrapper .sr-net-vert.sr-border-home{
+  border-color: #404246;
+}
+.sr-widget.sr-widgets-probabilities-correctscore .sr-chart-heatmapmatrix .sr-net-wrapper .sr-net-vert.sr-border-corner-right{
+  border-color: #404246;
+}
+.sr-widget.sr-widgets-probabilities-correctscore .sr-chart-heatmapmatrix .sr-net-wrapper .sr-net-vert.sr-half{
+  border-image: linear-gradient(90deg, #404246 50%, #01BDFF 50%, #01BDFF 100%) 15%;
+}
+.sr-widget.sr-widgets-probabilities-correctscore .sr-chart-heatmapmatrix .sr-net-wrapper .sr-net-hor.sr-border-home{
+  border-color: #404246;
+}
+.sr-widget.sr-widgets-probabilities-correctscore .sr-chart-heatmapmatrix .sr-net-wrapper .sr-net-hor.sr-border-corner-left{
+  border-color: #404246;
+}
+.sr-widget.sr-widgets-probabilities-correctscore .sr-chart-heatmapmatrix .sr-net-wrapper .sr-net-hor.sr-half{
+  border-image: linear-gradient(180deg, #01BDFF 50%, #404246 50%, #404246 100%) 15%;
+}
+.sr-widget.sr-widgets-probabilities-avgscoredconceded .sr-team-home{
+  background: #404246;
+}
+.sr-widget.sr-widgets-probabilities-avgscoredconceded .sr-team-home, .sr-widget.sr-widgets-probabilities-avgscoredconceded .srlblscnd-home{
+  color: #404246;
+}
+.sr-widget.sr-widgets-probabilities-seasonoutcome .sr-selected-home .sr-wrapper{
+  border-color: #404246;
+  background-color: rgba(64, 66, 70, 0.15);
+}
+.sr-widget.sr-widgets-probabilities-seasonoutcome .sr-outcome .sr-selected-home .sr-wrapper{
+  border-color: #404246;
+  background-color: rgba(64, 66, 70, 0.15);
+}
+.sr-widget.sr-widgets-probabilities-seasonoutcome .sr-seasonoutcome-svg .sr-line-home{
+  stroke: #404246;
+}
+.sr-widget .sr-carousel-tile-enabled.sr-active .sr-tile{
+  background: linear-gradient(to right, rgba(86, 88, 93, 0.5), transparent);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.sr-widget[dir="rtl"] .sr-carousel-tile.sr-active{
+  background: linear-gradient(to left, rgba(86, 88, 93, 0.5), transparent);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.sr-widget .sr-tile-highlighted{
+  background-color: rgba(86, 88, 93, 0.5);
+  border-color: rgba(86, 88, 93, 0.5);
+}
+.sr-widget .sr-icon.sr-icon-active{
+  color: #404246;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+.sr-widget .sr-icon.sr-icon-toggle:hover{
+  color: #404246;
+  background-color: rgba(0, 0, 0, 0.25);
+}
+.sr-widgets-livetable {
+	overflow-y: auto;
+}
+/****** variables used for generation *******$brandColor: rgb(86, 88, 93);
+$clFontPrimary: #ffffff;
+$bgPrimary: #ffffff;
+$clFontHeader: #ffffff;
+$teamHome: rgb(64, 66, 70);
+$teamAway: #01BDFF;
+$clHomeAwayTeam: #000000;
+$bgDialog: #000000;
+$clDialog: #ffffff;
+$bgHighlight: rgb(64, 66, 70);
+$clHighlight: #000000;
+$bgOddsArrowUp: #009100;
+$bgOddsArrowDown: #cf0000;
+*********************************************/
