@@ -4,7 +4,7 @@ tmp.py
 *.log
 *.idea/**
 **__pycache__/**
-
+mlruns/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
