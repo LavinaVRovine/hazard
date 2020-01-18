@@ -106,6 +106,6 @@ def join_with_old(data):
     return lol_df
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     x = handle_the_old_way()
     print()
