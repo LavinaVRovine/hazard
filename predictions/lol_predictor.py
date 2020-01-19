@@ -9,17 +9,6 @@ from config import ROOT_DIR
 pd.set_option("display.width", 1000)
 pd.set_option("display.max_columns", 50)
 
-RANDOM_STATE = 7
-DEBUG = False
-DEBUG_PARAMS = {
-    "bootstrap": [False],
-    "max_depth": [None],
-    "max_features": ["sqrt"],
-    "min_samples_leaf": [2],
-    "min_samples_split": [5],
-    "n_estimators": [400],
-}
-
 
 class LoLPredictor(CommonPredictor):
     def __init__(self, debug: bool = False):

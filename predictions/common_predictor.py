@@ -83,23 +83,27 @@ class CommonPredictor(ABC):
         )
         return model
 
+    def transform_data(self, df):
+        return df.pop(self.y_col_name), df.loc[:, self.training_columns].fillna(0)
+
     def set_data(self, df: pd.DataFrame) -> bool:
-        y = df.pop(self.y_col_name)
-        df = df.loc[:, self.training_columns].fillna(0)
+        y, df = self.transform_data(df)
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
             df, y, test_size=0.2, random_state=RANDOM_STATE if self.debug else None
         )
 
         return True
 
-    def train_new_model(self, df: pd.DataFrame) -> None:
+    def train_new_model(self, df: pd.DataFrame, runs=100) -> None:
 
         self.set_data(df)
 
         # Number of trees in random forest
         n_estimators = [int(x) for x in np.linspace(start=200, stop=1000, num=10)]
         # Number of features to consider at every split
-        max_features = ["auto", "sqrt"]
+        # max_features = ["auto", "sqrt", ]
+        max_features = [len(self.X_train.columns) - 2, len(self.X_train.columns) - 4]
+        max_leaf_nodes = [10, 20, 30, 40]
         # Maximum number of levels in tree
         max_depth = [int(x) for x in np.linspace(10, 110, num=11)]
         max_depth.append(None)
@@ -116,12 +120,13 @@ class CommonPredictor(ABC):
             "min_samples_split": min_samples_split,
             "min_samples_leaf": min_samples_leaf,
             "bootstrap": bootstrap,
+            "max_leaf_nodes": max_leaf_nodes
         }
         rf_model = RandomForestClassifier()
         model = RandomizedSearchCV(
             rf_model,
             param_distributions=DEBUG_PARAMS if self.debug else random_grid,
-            n_iter=1 if self.debug else 100,
+            n_iter=1 if self.debug else runs,
             cv=3,
             random_state=RANDOM_STATE if self.debug else None,
         )
@@ -133,9 +138,9 @@ class CommonPredictor(ABC):
 
         print("trained new model")
 
-    def main_train(self, df, run_name="run"):
+    def main_train(self, df, run_name="run", n_runs=100):
         with mlflow.start_run(run_name=run_name):
-            self.train_new_model(df)
+            self.train_new_model(df, n_runs)
             preds = self.model.predict(self.X_test)
             pred_probas = self.model.predict_proba(self.X_test)
             perf = self.eval_performance(preds, pred_probas)

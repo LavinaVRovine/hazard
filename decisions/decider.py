@@ -20,7 +20,7 @@ class Decider:
         self.team_2_rate = match_row["team_2_rate"]
 
     @staticmethod
-    def calc_ods_percent(decimal_ods):
+    def calc_ods_percent(decimal_ods) -> float:
         return 1 / decimal_ods
 
     def validate_teams(self, main_team: Optional[Union[pd.DataFrame, pd.Series]], competitor: Optional[Union[pd.DataFrame, pd.Series]]):
@@ -35,12 +35,13 @@ class Decider:
             raise ValueError
         return True
 
-    def create_match_stats_row(self):
+    def create_match_stats_row(self) -> pd.DataFrame:
         main_team = self.lookup_team_stats(self.team_1_name)
         competitor = self.lookup_team_stats(self.team_2_name)
         try:
             self.validate_teams(main_team, competitor)
         except ValueError:
+            # todo fix
             return
         competitor = competitor.add_prefix("c_")
         if type(competitor) == pd.Series or type(main_team) == pd.Series:
@@ -81,11 +82,13 @@ class Decider:
             match_row = self.create_match_stats_row()
         except ValueError:
             return {"team1": self.team_1_name, "team2": self.team_2_name}
-        print()
-        try:
-            match_row = match_row[predictor.training_columns]
 
-            preds = predictor.predict_one_match(match_row.fillna(0))
+        match_row = match_row[predictor.training_columns]
+        return self.decide(predictor, match_row.fillna(0))
+
+    def decide(self, predictor, prediction_row) -> dict:
+        try:
+            preds = predictor.predict_one_match(prediction_row.fillna(0))
             # now does basically nothing :)
             decision = self.compare_ods(preds[True])
 

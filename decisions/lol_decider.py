@@ -21,7 +21,7 @@ class LoLDecider(Decider):
         return pd.Series(output)
 
     def decide_match_action(self, predictor):
-
+        # TODO tohle je tady jelikoz predictor nema training columns?
         match_row = super().create_match_stats_row()
         try:
             preds = predictor.predict_one_match(match_row.fillna(0))
