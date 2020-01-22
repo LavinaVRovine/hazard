@@ -8,9 +8,10 @@ from config import logging, DATABASE_URI, DB_MAPPINGS, IMPLEMENTED_BOOKIES, DEBU
 from predictions.lol_predictor import LoLPredictor
 from predictions.dota_predictor import DotaPredictor
 from predictions.csgo_predictor import CSGOPredictor
-from data.get_csgo_data import get_csgo_data
 from bookie_monitors.ifortuna_cz import IfortunaCz  # needed, dont remove
 from data.csgo_data_creator import CSGOData
+from data.lol_data_creator import LOLData
+from data.dota_data_creator import DOTAData
 
 pd.set_option("display.width", 1000)
 pd.set_option("display.max_columns", 50)
@@ -34,9 +35,11 @@ def create_predictor(game):
 
 def create_decider(game, bookie_match_row, db_location):
     if game == "LoL":
-        return LoLDecider(bookie_match_row, db_location)
+        data_handler = LOLData()
+        return LoLDecider(bookie_match_row, db_location, data_handler)
     elif game == "Dota":
-        return DotaDecider(bookie_match_row, db_location)
+        data_handler = DOTAData()
+        return DotaDecider(bookie_match_row, db_location, data_handler)
     elif game == "CS:GO":
         data_handler = CSGOData()
         return CSGODecider(bookie_match_row, db_location, data_handler)
@@ -121,7 +124,5 @@ def compare_odds(**kwargs):
 
 
 if __name__ == "__main__":
-    #main("CS:GO")
-    main("LoL")
-    #main("Dota")
-    #compare_odds()
+
+    compare_odds()

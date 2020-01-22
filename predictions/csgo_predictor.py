@@ -46,7 +46,7 @@ if __name__ == "__main__":
     cs_df = remove_id_cols(get_csgo_data())
 
     predictor = CSGOPredictor(debug=False)
-    predictor.main_train(cs_df, run_name="first run", n_runs=100)
+    predictor.main_train(cs_df, run_name="first run", n_runs=50)
 
     # predictor.save_model(predictor.train_on_whole(predictor.best_params))
     print()

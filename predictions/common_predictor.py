@@ -129,6 +129,8 @@ class CommonPredictor(ABC):
             n_iter=1 if self.debug else runs,
             cv=3,
             random_state=RANDOM_STATE if self.debug else None,
+            verbose=2,
+
         )
 
         model.fit(self.X_train, self.y_train)

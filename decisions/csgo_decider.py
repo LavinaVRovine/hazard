@@ -12,7 +12,9 @@ class CSGODecider(Decider):
 
     def decide_match_action(self, predictor) -> dict:
         try:
-            match_row = self.data_handler.create_match_stats_row(self.team_1_name, self.team_2_name)
+            match_row = self.data_handler.create_match_stats_row(
+                self.team_1_name, self.team_2_name
+            )
         except (TeamNotFound, NoMatchData) as e:
             print(e)
             return {"team1": self.team_1_name, "team2": self.team_2_name}

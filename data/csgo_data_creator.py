@@ -11,7 +11,7 @@ from config import DATABASE_URI
 
 class CSGOData:
     def __init__(self):
-        self.engine = create_engine(DATABASE_URI+"csgo", echo=False)
+        self.engine = create_engine(DATABASE_URI + "csgo", echo=False)
         self.df = get_csgo_data()
 
     @staticmethod
@@ -50,7 +50,9 @@ class CSGOData:
             team_name = "ldlc"
 
         df = pd.read_sql(
-            "SELECT * FROM team where name = %(t_name)s".format(team_name,), con=self.engine, params={"t_name": team_name}
+            "SELECT * FROM team where name = %(t_name)s".format(team_name,),
+            con=self.engine,
+            params={"t_name": team_name},
         )
         if len(df) == 0:
             raise TeamNotFound(f"Team name {orig_name} -> {team_name}: not found")
@@ -62,8 +64,7 @@ class CSGOData:
 
         if len(row) == 0:
             return data_if_not_played_before(t1_id, t2_id)
-        else:
-            return row.iloc[0, :]
+        return row.iloc[0, :]
 
     def create_match_stats_row(self, t1_name, t2_name) -> pd.Series:
         try:

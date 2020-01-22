@@ -59,7 +59,7 @@ if __name__ == "__main__":
     lol = LoLPredictor()
     con = create_engine(DATABASE_URI + "lol", echo=False)
     df_all = pd.read_sql("SELECT * FROM averaged_predictions", con=con)
-    lol.main_train(df_all, run_name="first run")
+    lol.main_train(df_all, run_name="save run", n_runs=30)
     print()
     # todo musi byt v current run
     # mlflow.sklearn.save_model(lol.model, path=f"{ROOT_DIR}/models/ttt", conda_env=f"{ROOT_DIR}/environment.yaml")

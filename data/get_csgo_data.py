@@ -2,6 +2,7 @@ import pandas as pd
 from sqlalchemy import create_engine
 from config import DATABASE_URI
 from helpers.custom_exceptions import NoMatchData
+
 DB_URL = f"{DATABASE_URI}csgo"
 ENGINE = create_engine(DB_URL)
 
@@ -91,6 +92,7 @@ class ColumnRenamer:
     """
     small helper to rename duplicate columns
     """
+
     def __init__(self):
         self.d = dict()
 
@@ -124,11 +126,15 @@ def get_csgo_data():
         suffixes=("", "AEO"),
     )
 
-    df_with_winrates_stats_aeo_stats = df_with_winrates_stats_aeo_stats.rename(columns=ColumnRenamer())
+    df_with_winrates_stats_aeo_stats = df_with_winrates_stats_aeo_stats.rename(
+        columns=ColumnRenamer()
+    )
     df_with_winrates_stats = df_with_winrates_stats.rename(columns=ColumnRenamer())
 
     # doing this because in preds teams might not yet have faced each other, therefore ll be missing AEO stats
-    return df_with_winrates_stats_aeo_stats.append(df_with_winrates_stats, sort=False).sample(frac=.75)
+    return df_with_winrates_stats_aeo_stats.append(
+        df_with_winrates_stats, sort=False
+    ).sample(frac=0.75)
 
 
 def data_if_not_played_before(main_team_id, competitor_id) -> pd.Series:
@@ -142,16 +148,26 @@ def data_if_not_played_before(main_team_id, competitor_id) -> pd.Series:
     team_stats = get_teams_stats()
     team_winrate = get_teams_winrate()
 
-    df_with_winrates = team_stats.merge(team_winrate, left_on="team_id", right_on="team_id")
-    t1_r = df_with_winrates.loc[df_with_winrates["team_id"] == main_team_id].add_suffix("_n")
-    t2_r = df_with_winrates.loc[df_with_winrates["team_id"] == competitor_id].add_suffix("_c")
+    df_with_winrates = team_stats.merge(
+        team_winrate, left_on="team_id", right_on="team_id"
+    )
+    t1_r = df_with_winrates.loc[df_with_winrates["team_id"] == main_team_id].add_suffix(
+        "_n"
+    )
+    t2_r = df_with_winrates.loc[
+        df_with_winrates["team_id"] == competitor_id
+    ].add_suffix("_c")
 
     if len(t1_r) == 0:
         raise NoMatchData(f"failed to find data for id {main_team_id}")
     if len(t2_r) == 0:
         raise NoMatchData(f"failed to find data for id {competitor_id}")
 
-    whole_row = pd.concat([t1_r.reset_index(drop=True), t2_r.reset_index(drop=True)], axis=1, ignore_index=False)
+    whole_row = pd.concat(
+        [t1_r.reset_index(drop=True), t2_r.reset_index(drop=True)],
+        axis=1,
+        ignore_index=False,
+    )
 
     return whole_row.iloc[0]
 
@@ -161,7 +177,7 @@ def remove_id_cols(df: pd.DataFrame) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-    data_if_not_played_before(4411,4555)
+    data_if_not_played_before(4411, 4555)
     print()
     df = get_csgo_data()
     print()
