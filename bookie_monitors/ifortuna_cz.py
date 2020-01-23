@@ -14,7 +14,7 @@ class IfortunaCz(Monitor):
 
     # FIXME. uses old website layout
     def use_saved_file(self):
-        print(f"Using saved file for {self.web_name}")
+        print(f"Using saved file for {self.__name__}")
         file = open(f"{ROOT_DIR}/data/IfortunaCz.html", encoding="utf-8")
         x = file.read()
 
@@ -25,7 +25,7 @@ class IfortunaCz(Monitor):
 
     def get_parse_page(self):
         response = super().get_response(self.gaming_page)
-        return BeautifulSoup(response.content, "html5lib")# "html.parser")
+        return BeautifulSoup(response.content, "html5lib")
 
     @staticmethod
     def is_invalid_tournament(t_title: str):
@@ -97,7 +97,6 @@ if __name__ == "__main__":
     import logging
 
     c = IfortunaCz(
-        "ifortuna",
         game_name="CS:GO",
         logger=logging,
         game_url="https://www.ifortuna.cz/sazeni/e-sporty",

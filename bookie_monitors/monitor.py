@@ -13,10 +13,9 @@ class Monitor:
     Written for ifortuna.cz
     """
 
-    def __init__(self, web_name, game_name, logger, game_url):
+    def __init__(self, game_name, logger, game_url):
         self.logger = logger
         self.game_name = game_name
-        self.web_name = web_name
         self.gaming_page = game_url
         self.db_url = DATABASE_URI + "monitor"
         self.engine = self.check_db(self.db_url)
@@ -25,6 +24,9 @@ class Monitor:
         # dont need nor want anything but win-lose betting
         self.game_type = "zápas"
         self.session = requests.Session()
+
+    def __repr__(self):
+        return self.__name__
 
     def get_response(self, url):
 
@@ -71,7 +73,7 @@ class Monitor:
         assert self.stats_updated is True, "No updated stats, dont put into DB"
 
         df = self.matches.copy()
-        df["web_page"] = self.web_name
+        df["web_page"] = self.__name__
         df["type"] = self.game_type
         df["game"] = self.game_name
         df["my_bid_status"] = None

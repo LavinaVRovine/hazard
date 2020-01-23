@@ -18,11 +18,11 @@ pd.set_option("display.max_columns", 50)
 
 
 def create_predictor(game):
-    if game == "LoL":
+    if game == "lol":
         return LoLPredictor()
-    elif game == "Dota":
+    elif game == "dota":
         return DotaPredictor()
-    elif game == "CS:GO":
+    elif game == "csgo":
         return CSGOPredictor()
     else:
         logging.critical(f"Not implemented game: {game}")
@@ -30,13 +30,13 @@ def create_predictor(game):
 
 
 def create_decider(game, bookie_match_row, db_location):
-    if game == "LoL":
+    if game == "lol":
         data_handler = LOLData()
         return LoLDecider(bookie_match_row, db_location, data_handler)
-    elif game == "Dota":
+    elif game == "dota":
         data_handler = DOTAData()
         return DotaDecider(bookie_match_row, db_location, data_handler)
-    elif game == "CS:GO":
+    elif game == "csgo":
         data_handler = CSGOData()
         return CSGODecider(bookie_match_row, db_location, data_handler)
     else:
@@ -63,17 +63,16 @@ def main(game):
     predictor = create_predictor(game)
 
     bookies = [
-        IfortunaCz("IfortunaCz", game_name=game, logger=logging, game_url=IMPLEMENTED_BOOKIES[game]["IfortunaCz"])
+        IfortunaCz(game_name=game, logger=logging, game_url=IMPLEMENTED_BOOKIES[game]["IfortunaCz"])
     ]
     for bookie in bookies:
-        monitor = bookie
-        monitor.get_bookie_info()
-        if monitor.matches is None:
+        bookie.get_bookie_info()
+        if bookie.matches is None:
             print(f"No games are being played for {game} on {bookie}")
             continue
         # if monitor.stats_updated:
         #     monitor.store_matches()
-        bookie_stats = monitor.get_biding_info()
+        bookie_stats = bookie.get_biding_info()
 
         if bookie_stats is None:
             continue
@@ -103,9 +102,9 @@ def compare_odds(**kwargs):
         games = ["all"]
 
     if "all" in games:
-        main("LoL")
-        main("Dota")
-        main("CS:GO")
+        main("lol")
+        main("dota")
+        main("csgo")
     else:
         for game in games:
 
@@ -115,5 +114,4 @@ def compare_odds(**kwargs):
 
 
 if __name__ == "__main__":
-
     compare_odds()
