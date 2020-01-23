@@ -4,9 +4,10 @@ from sqlalchemy import create_engine
 from config import DATABASE_URI
 from typing import Optional, Union
 import re
+from.data_creator import MyData
 
 
-class DOTAData:
+class DOTAData(MyData):
     def __init__(self):
         self.engine = create_engine(DATABASE_URI + "dota", echo=False)
 
@@ -30,36 +31,3 @@ class DOTAData:
             return like_match
 
         return
-
-    def validate_teams(
-            self,
-            main_team: Optional[Union[pd.DataFrame, pd.Series]],
-            competitor: Optional[Union[pd.DataFrame, pd.Series]],
-    ):
-        try:
-            # FIXME need to use the team name you know...
-            if main_team is None or len(main_team) == 0:
-                print(f"No team {main_team} in DB")
-                raise TeamNotFound
-            elif competitor is None or len(competitor) == 0:
-                print(f"No team {competitor} in DB")
-                raise TeamNotFound
-        except:
-            raise ValueError
-        return True
-
-    def create_match_stats_row(self, team_1_name, team_2_name) -> pd.DataFrame:
-        main_team = self.lookup_team_stats(team_1_name)
-        competitor = self.lookup_team_stats(team_2_name)
-        try:
-            self.validate_teams(main_team, competitor)
-        except TeamNotFound:
-            # todo fix
-            raise
-        competitor = competitor.add_prefix("c_")
-        if type(competitor) == pd.Series or type(main_team) == pd.Series:
-            whole_row = pd.concat([main_team, competitor])
-            return pd.DataFrame(whole_row).T
-        else:
-            whole_row = pd.concat([main_team, competitor], axis=1)
-        return whole_row
