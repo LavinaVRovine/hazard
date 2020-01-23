@@ -72,6 +72,6 @@ if __name__ == "__main__":
     mlflow.set_tracking_uri(f"file:///{ROOT_DIR}/mlruns")
     mlflow.set_experiment("hazard_dota")
 
-    pred = DotaPredictor(debug=True)
-    pred.main_train(df, run_name="first run")
+    pred = DotaPredictor(debug=False)
+    pred.main_train(df, run_name="save run", n_runs=50)
     print()

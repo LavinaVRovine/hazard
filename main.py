@@ -8,17 +8,13 @@ from config import logging, DATABASE_URI, DB_MAPPINGS, IMPLEMENTED_BOOKIES, DEBU
 from predictions.lol_predictor import LoLPredictor
 from predictions.dota_predictor import DotaPredictor
 from predictions.csgo_predictor import CSGOPredictor
-from bookie_monitors.ifortuna_cz import IfortunaCz  # needed, dont remove
+from bookie_monitors.ifortuna_cz import IfortunaCz
 from data.csgo_data_creator import CSGOData
 from data.lol_data_creator import LOLData
 from data.dota_data_creator import DOTAData
 
 pd.set_option("display.width", 1000)
 pd.set_option("display.max_columns", 50)
-
-# script's purpose is to predict who ll win e-sport game and
-# suggest action and amount to bet
-# WIP currently
 
 
 def create_predictor(game):
@@ -47,22 +43,6 @@ def create_decider(game, bookie_match_row, db_location):
         raise NotImplementedError
 
 
-def get_bookie_stats(bookie, game, game_url):
-    global_vars = globals()
-    assert bookie in global_vars, f"Cant instantialize " f"class for bookie {bookie}"
-    monitor = global_vars[bookie](
-        bookie, game_name=game, logger=logging, game_url=game_url
-    )
-    # goes to bookie page and downloads new stats etc.
-    monitor.get_bookie_info()
-    if monitor.matches is None:
-        print(f"No games are being played for {game} on {bookie}")
-        return
-    # if monitor.stats_updated:
-    #     monitor.store_matches()
-    return monitor.get_biding_info()
-
-
 def process_matches(bookie_stats, game: str, db_location, predictor) -> list:
     output_data = list()
     for index, row in bookie_stats.iterrows():
@@ -81,9 +61,20 @@ def main(game):
     print(f"Started script for game: {game}")
     db_location = DATABASE_URI + DB_MAPPINGS[game]
     predictor = create_predictor(game)
-    bookies = IMPLEMENTED_BOOKIES[game]
-    for bookie, game_url in bookies.items():
-        bookie_stats = get_bookie_stats(bookie, game, game_url)
+
+    bookies = [
+        IfortunaCz("IfortunaCz", game_name=game, logger=logging, game_url=IMPLEMENTED_BOOKIES[game]["IfortunaCz"])
+    ]
+    for bookie in bookies:
+        monitor = bookie
+        monitor.get_bookie_info()
+        if monitor.matches is None:
+            print(f"No games are being played for {game} on {bookie}")
+            continue
+        # if monitor.stats_updated:
+        #     monitor.store_matches()
+        bookie_stats = monitor.get_biding_info()
+
         if bookie_stats is None:
             continue
         output_data = process_matches(bookie_stats, game, db_location, predictor)
